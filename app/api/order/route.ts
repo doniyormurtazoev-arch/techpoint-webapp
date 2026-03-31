@@ -1,50 +1,5 @@
 import { NextResponse } from "next/server";
 
-export async function GET() {
-  try {
-    const botToken = process.env.BOT_TOKEN;
-    const adminChatId = process.env.ADMIN_CHAT_ID;
-
-    if (!botToken) {
-      return NextResponse.json(
-        {
-          ok: false,
-          error: "BOT_TOKEN missing",
-          adminChatId,
-        },
-        { status: 500 }
-      );
-    }
-
-    const meRes = await fetch(
-      `https://api.telegram.org/bot${botToken}/getMe`,
-      {
-        method: "GET",
-      }
-    );
-
-    const meJson = await meRes.json();
-
-    return NextResponse.json({
-      ok: meRes.ok,
-      envSeen: {
-        botTokenExists: Boolean(botToken),
-        botTokenPrefix: botToken.slice(0, 12),
-        adminChatId,
-      },
-      telegram: meJson,
-    });
-  } catch (error: any) {
-    return NextResponse.json(
-      {
-        ok: false,
-        error: error?.message || String(error),
-      },
-      { status: 500 }
-    );
-  }
-}
-
 export async function POST(req: Request) {
   try {
     const body = await req.json();
@@ -77,16 +32,23 @@ export async function POST(req: Request) {
 
     const customerText = body.customer
       ? [
-          `Клиент: ${body.customer.first_name || ""} ${body.customer.last_name || ""}`.trim(),
+          `Telegram: ${body.customer.first_name || ""} ${body.customer.last_name || ""}`.trim(),
           body.customer.username ? `Username: @${body.customer.username}` : null,
           `Telegram ID: ${body.customer.id}`,
         ]
           .filter(Boolean)
           .join("\n")
-      : "Клиент: не определён";
+      : "Telegram: не определён";
+
+    const formText = [
+      `Имя: ${body.form?.name || "-"}`,
+      `Телефон: ${body.form?.phone || "-"}`,
+      `Комментарий: ${body.form?.comment || "-"}`,
+    ].join("\n");
 
     const message =
       `🛒 Новый заказ TechPoint\n\n` +
+      `${formText}\n\n` +
       `${customerText}\n\n` +
       `${itemsText}\n\n` +
       `Всего товаров: ${body.totalItems}\n` +
