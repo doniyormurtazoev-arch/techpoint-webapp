@@ -55,6 +55,11 @@ export default function Home() {
   const [qtyMap, setQtyMap] = useState<Record<number, number>>(
     Object.fromEntries(products.map((p) => [p.id, 1]))
   );
+
+  const [name, setName] = useState("");
+  const [phone, setPhone] = useState("");
+  const [comment, setComment] = useState("");
+
   const [loading, setLoading] = useState(false);
   const [successMessage, setSuccessMessage] = useState("");
 
@@ -112,6 +117,16 @@ export default function Home() {
       return;
     }
 
+    if (!name.trim()) {
+      alert("Введите имя");
+      return;
+    }
+
+    if (!phone.trim()) {
+      alert("Введите телефон");
+      return;
+    }
+
     try {
       setLoading(true);
 
@@ -136,6 +151,11 @@ export default function Home() {
               username: user.username,
             }
           : null,
+        form: {
+          name: name.trim(),
+          phone: phone.trim(),
+          comment: comment.trim(),
+        },
       };
 
       const res = await fetch("/api/order", {
@@ -154,6 +174,9 @@ export default function Home() {
       }
 
       setCart([]);
+      setName("");
+      setPhone("");
+      setComment("");
       setSuccessMessage("Заказ успешно отправлен");
       setTimeout(() => setSuccessMessage(""), 2500);
     } catch (error) {
@@ -337,6 +360,64 @@ export default function Home() {
             </div>
           </>
         )}
+      </div>
+
+      <div
+        style={{
+          padding: 14,
+          background: "#f7f7f7",
+          color: "#111",
+          borderRadius: 12,
+          marginBottom: 20,
+        }}
+      >
+        <h3 style={{ marginTop: 0 }}>Данные клиента</h3>
+
+        <input
+          value={name}
+          onChange={(e) => setName(e.target.value)}
+          placeholder="Ваше имя"
+          style={{
+            width: "100%",
+            padding: 12,
+            marginBottom: 10,
+            borderRadius: 10,
+            border: "1px solid #ccc",
+            fontSize: 16,
+            boxSizing: "border-box",
+          }}
+        />
+
+        <input
+          value={phone}
+          onChange={(e) => setPhone(e.target.value)}
+          placeholder="Телефон"
+          style={{
+            width: "100%",
+            padding: 12,
+            marginBottom: 10,
+            borderRadius: 10,
+            border: "1px solid #ccc",
+            fontSize: 16,
+            boxSizing: "border-box",
+          }}
+        />
+
+        <textarea
+          value={comment}
+          onChange={(e) => setComment(e.target.value)}
+          placeholder="Комментарий к заказу"
+          rows={4}
+          style={{
+            width: "100%",
+            padding: 12,
+            borderRadius: 10,
+            border: "1px solid #ccc",
+            fontSize: 16,
+            resize: "vertical",
+            boxSizing: "border-box",
+          }}
+        />
       </div>
 
       <button
