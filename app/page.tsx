@@ -7,6 +7,7 @@ type Product = {
   title: string;
   price: number;
   status: string;
+  emoji: string;
 };
 
 type CartItem = Product & {
@@ -30,24 +31,28 @@ export default function Home() {
       title: "HyperX Cloud Alpha",
       price: 1200000,
       status: "Под заказ",
+      emoji: "🎧",
     },
     {
       id: 2,
       title: "Logitech G102",
       price: 280000,
       status: "В наличии",
+      emoji: "🖱️",
     },
     {
       id: 3,
       title: "Redragon Kumara",
       price: 540000,
       status: "Под заказ",
+      emoji: "⌨️",
     },
     {
       id: 4,
       title: "Samsung 980 1TB",
       price: 990000,
       status: "В наличии",
+      emoji: "💾",
     },
   ];
 
@@ -186,253 +191,422 @@ export default function Home() {
     }
   };
 
+  const sectionTitleStyle: React.CSSProperties = {
+    fontSize: 24,
+    fontWeight: 800,
+    marginBottom: 14,
+    color: "#ffffff",
+  };
+
+  const cardStyle: React.CSSProperties = {
+    background: "#f8fafc",
+    color: "#111827",
+    borderRadius: 18,
+    padding: 16,
+    boxShadow: "0 8px 24px rgba(0,0,0,0.12)",
+  };
+
   return (
     <main
       style={{
-        padding: 20,
-        fontFamily: "sans-serif",
-        background: "#222b33",
         minHeight: "100vh",
+        background:
+          "linear-gradient(180deg, #1f2937 0%, #111827 50%, #0b1220 100%)",
+        padding: 18,
+        fontFamily:
+          "Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, sans-serif",
         color: "white",
       }}
     >
-      <h1 style={{ fontSize: 28, marginBottom: 10 }}>TechPoint</h1>
-      <p style={{ marginBottom: 20 }}>Электроника и комплектующие под заказ</p>
+      <div
+        style={{
+          marginBottom: 20,
+          padding: 18,
+          borderRadius: 22,
+          background: "rgba(255,255,255,0.08)",
+          border: "1px solid rgba(255,255,255,0.08)",
+          backdropFilter: "blur(8px)",
+        }}
+      >
+        <div
+          style={{
+            fontSize: 32,
+            fontWeight: 900,
+            letterSpacing: "-0.02em",
+            marginBottom: 6,
+          }}
+        >
+          TechPoint
+        </div>
+        <div
+          style={{
+            fontSize: 15,
+            color: "#d1d5db",
+            lineHeight: 1.5,
+          }}
+        >
+          Электроника и комплектующие под заказ
+        </div>
+      </div>
 
       {successMessage && (
         <div
           style={{
-            background: "#d1fae5",
-            color: "#065f46",
-            padding: 12,
-            borderRadius: 10,
-            marginBottom: 16,
-            fontWeight: 600,
+            background: "#dcfce7",
+            color: "#166534",
+            padding: 14,
+            borderRadius: 16,
+            marginBottom: 18,
+            fontWeight: 700,
+            boxShadow: "0 8px 20px rgba(0,0,0,0.12)",
           }}
         >
           {successMessage}
         </div>
       )}
 
-      <input
-        placeholder="Поиск товара"
-        style={{
-          width: "100%",
-          padding: 12,
-          marginBottom: 25,
-          borderRadius: 10,
-          border: "1px solid #ccc",
-          fontSize: 16,
-        }}
-      />
-
-      <h2 style={{ fontSize: 22, marginBottom: 12 }}>Категории</h2>
-      <div style={{ marginBottom: 30 }}>
-        {categories.map((cat, i) => (
-          <div
-            key={i}
-            style={{
-              padding: 12,
-              marginBottom: 8,
-              background: "#f3f3f3",
-              color: "#111",
-              borderRadius: 10,
-            }}
-          >
-            {cat}
-          </div>
-        ))}
+      <div style={{ marginBottom: 28 }}>
+        <input
+          placeholder="Поиск товара"
+          style={{
+            width: "100%",
+            padding: 14,
+            borderRadius: 16,
+            border: "1px solid #d1d5db",
+            fontSize: 16,
+            outline: "none",
+            boxSizing: "border-box",
+            background: "#ffffff",
+            boxShadow: "0 8px 20px rgba(0,0,0,0.12)",
+          }}
+        />
       </div>
 
-      <h2 style={{ fontSize: 22, marginBottom: 12 }}>Популярные товары</h2>
-      <div style={{ marginBottom: 30 }}>
-        {products.map((p) => (
-          <div
-            key={p.id}
-            style={{
-              padding: 14,
-              marginBottom: 12,
-              background: "#f7f7f7",
-              color: "#111",
-              borderRadius: 12,
-            }}
-          >
-            <div style={{ fontWeight: 700, fontSize: 18 }}>{p.title}</div>
-            <div style={{ marginTop: 10 }}>{p.status}</div>
-            <div style={{ marginTop: 10, fontSize: 20 }}>
-              {formatPrice(p.price)}
-            </div>
+      <section style={{ marginBottom: 28 }}>
+        <div style={sectionTitleStyle}>Категории</div>
 
+        <div
+          style={{
+            display: "grid",
+            gap: 10,
+          }}
+        >
+          {categories.map((cat, i) => (
             <div
+              key={i}
               style={{
-                display: "flex",
-                gap: 10,
-                alignItems: "center",
-                marginTop: 14,
-                flexWrap: "wrap",
+                background: "rgba(255,255,255,0.95)",
+                color: "#111827",
+                padding: 14,
+                borderRadius: 16,
+                fontWeight: 600,
+                boxShadow: "0 8px 20px rgba(0,0,0,0.12)",
               }}
             >
+              {cat}
+            </div>
+          ))}
+        </div>
+      </section>
+
+      <section style={{ marginBottom: 28 }}>
+        <div style={sectionTitleStyle}>Популярные товары</div>
+
+        <div style={{ display: "grid", gap: 14 }}>
+          {products.map((p) => (
+            <div key={p.id} style={cardStyle}>
               <div
                 style={{
                   display: "flex",
-                  alignItems: "center",
-                  gap: 8,
-                  background: "#e5e7eb",
-                  padding: 6,
-                  borderRadius: 10,
+                  alignItems: "flex-start",
+                  gap: 12,
                 }}
               >
-                <button
-                  onClick={() => decreaseQty(p.id)}
+                <div
                   style={{
-                    width: 32,
-                    height: 32,
-                    border: "none",
-                    borderRadius: 8,
-                    cursor: "pointer",
+                    width: 54,
+                    height: 54,
+                    borderRadius: 14,
+                    background: "#e5e7eb",
+                    display: "flex",
+                    alignItems: "center",
+                    justifyContent: "center",
+                    fontSize: 24,
+                    flexShrink: 0,
                   }}
                 >
-                  -
-                </button>
+                  {p.emoji}
+                </div>
 
-                <span style={{ minWidth: 24, textAlign: "center" }}>
-                  {qtyMap[p.id] || 1}
-                </span>
+                <div style={{ flex: 1 }}>
+                  <div
+                    style={{
+                      fontSize: 18,
+                      fontWeight: 800,
+                      marginBottom: 8,
+                    }}
+                  >
+                    {p.title}
+                  </div>
 
-                <button
-                  onClick={() => increaseQty(p.id)}
-                  style={{
-                    width: 32,
-                    height: 32,
-                    border: "none",
-                    borderRadius: 8,
-                    cursor: "pointer",
-                  }}
-                >
-                  +
-                </button>
+                  <div
+                    style={{
+                      display: "inline-block",
+                      background: p.status === "В наличии" ? "#dcfce7" : "#fef3c7",
+                      color: p.status === "В наличии" ? "#166534" : "#92400e",
+                      borderRadius: 999,
+                      padding: "6px 10px",
+                      fontSize: 13,
+                      fontWeight: 700,
+                      marginBottom: 10,
+                    }}
+                  >
+                    {p.status}
+                  </div>
+
+                  <div
+                    style={{
+                      fontSize: 22,
+                      fontWeight: 900,
+                      marginBottom: 14,
+                    }}
+                  >
+                    {formatPrice(p.price)}
+                  </div>
+                </div>
               </div>
 
-              <button
-                onClick={() => addToCart(p)}
+              <div
                 style={{
-                  padding: "10px 14px",
-                  background: "black",
-                  color: "white",
-                  border: "none",
-                  borderRadius: 10,
-                  cursor: "pointer",
+                  display: "flex",
+                  gap: 10,
+                  alignItems: "center",
+                  flexWrap: "wrap",
                 }}
               >
-                Добавить в корзину
-              </button>
-            </div>
-          </div>
-        ))}
-      </div>
+                <div
+                  style={{
+                    display: "flex",
+                    alignItems: "center",
+                    gap: 8,
+                    background: "#e5e7eb",
+                    padding: 6,
+                    borderRadius: 14,
+                  }}
+                >
+                  <button
+                    onClick={() => decreaseQty(p.id)}
+                    style={{
+                      width: 36,
+                      height: 36,
+                      border: "none",
+                      borderRadius: 10,
+                      cursor: "pointer",
+                      fontSize: 18,
+                      fontWeight: 700,
+                      background: "#fff",
+                    }}
+                  >
+                    -
+                  </button>
 
-      <div
-        style={{
-          padding: 14,
-          background: "#f7f7f7",
-          color: "#111",
-          borderRadius: 12,
-          marginBottom: 20,
-        }}
-      >
-        <h3 style={{ marginTop: 0 }}>Корзина</h3>
+                  <span
+                    style={{
+                      minWidth: 28,
+                      textAlign: "center",
+                      fontWeight: 800,
+                      fontSize: 16,
+                    }}
+                  >
+                    {qtyMap[p.id] || 1}
+                  </span>
 
-        {cart.length === 0 ? (
-          <p>Пока пусто</p>
-        ) : (
-          <>
-            {cart.map((item, index) => (
-              <div key={item.id} style={{ marginBottom: 8 }}>
-                {index + 1}. {item.title} x{item.qty} —{" "}
-                {formatPrice(item.price * item.qty)}
+                  <button
+                    onClick={() => increaseQty(p.id)}
+                    style={{
+                      width: 36,
+                      height: 36,
+                      border: "none",
+                      borderRadius: 10,
+                      cursor: "pointer",
+                      fontSize: 18,
+                      fontWeight: 700,
+                      background: "#fff",
+                    }}
+                  >
+                    +
+                  </button>
+                </div>
+
+                <button
+                  onClick={() => addToCart(p)}
+                  style={{
+                    flex: 1,
+                    minWidth: 180,
+                    padding: "12px 16px",
+                    background: "#111827",
+                    color: "white",
+                    border: "none",
+                    borderRadius: 14,
+                    cursor: "pointer",
+                    fontWeight: 700,
+                    fontSize: 15,
+                  }}
+                >
+                  Добавить в корзину
+                </button>
               </div>
-            ))}
-
-            <hr style={{ margin: "12px 0" }} />
-            <div>Всего товаров: {totalItems}</div>
-            <div style={{ fontWeight: 700, marginTop: 6 }}>
-              Итого: {formatPrice(totalPrice)}
             </div>
-          </>
-        )}
-      </div>
+          ))}
+        </div>
+      </section>
 
-      <div
-        style={{
-          padding: 14,
-          background: "#f7f7f7",
-          color: "#111",
-          borderRadius: 12,
-          marginBottom: 20,
-        }}
-      >
-        <h3 style={{ marginTop: 0 }}>Данные клиента</h3>
+      <section style={{ marginBottom: 20 }}>
+        <div style={cardStyle}>
+          <h3
+            style={{
+              marginTop: 0,
+              marginBottom: 14,
+              fontSize: 22,
+              fontWeight: 800,
+            }}
+          >
+            Корзина
+          </h3>
 
-        <input
-          value={name}
-          onChange={(e) => setName(e.target.value)}
-          placeholder="Ваше имя"
-          style={{
-            width: "100%",
-            padding: 12,
-            marginBottom: 10,
-            borderRadius: 10,
-            border: "1px solid #ccc",
-            fontSize: 16,
-            boxSizing: "border-box",
-          }}
-        />
+          {cart.length === 0 ? (
+            <p style={{ color: "#6b7280", margin: 0 }}>Пока пусто</p>
+          ) : (
+            <>
+              <div style={{ display: "grid", gap: 10 }}>
+                {cart.map((item, index) => (
+                  <div
+                    key={item.id}
+                    style={{
+                      padding: 12,
+                      borderRadius: 14,
+                      background: "#eef2f7",
+                    }}
+                  >
+                    <div style={{ fontWeight: 700, marginBottom: 6 }}>
+                      {index + 1}. {item.title}
+                    </div>
+                    <div style={{ color: "#4b5563" }}>
+                      Кол-во: {item.qty}
+                    </div>
+                    <div
+                      style={{
+                        marginTop: 6,
+                        fontWeight: 800,
+                      }}
+                    >
+                      {formatPrice(item.price * item.qty)}
+                    </div>
+                  </div>
+                ))}
+              </div>
 
-        <input
-          value={phone}
-          onChange={(e) => setPhone(e.target.value)}
-          placeholder="Телефон"
-          style={{
-            width: "100%",
-            padding: 12,
-            marginBottom: 10,
-            borderRadius: 10,
-            border: "1px solid #ccc",
-            fontSize: 16,
-            boxSizing: "border-box",
-          }}
-        />
+              <hr
+                style={{
+                  margin: "16px 0",
+                  border: 0,
+                  borderTop: "1px solid #d1d5db",
+                }}
+              />
 
-        <textarea
-          value={comment}
-          onChange={(e) => setComment(e.target.value)}
-          placeholder="Комментарий к заказу"
-          rows={4}
-          style={{
-            width: "100%",
-            padding: 12,
-            borderRadius: 10,
-            border: "1px solid #ccc",
-            fontSize: 16,
-            resize: "vertical",
-            boxSizing: "border-box",
-          }}
-        />
-      </div>
+              <div style={{ color: "#374151", marginBottom: 6 }}>
+                Всего товаров: {totalItems}
+              </div>
+              <div
+                style={{
+                  fontWeight: 900,
+                  fontSize: 20,
+                }}
+              >
+                Итого: {formatPrice(totalPrice)}
+              </div>
+            </>
+          )}
+        </div>
+      </section>
+
+      <section style={{ marginBottom: 20 }}>
+        <div style={cardStyle}>
+          <h3
+            style={{
+              marginTop: 0,
+              marginBottom: 14,
+              fontSize: 22,
+              fontWeight: 800,
+            }}
+          >
+            Данные клиента
+          </h3>
+
+          <input
+            value={name}
+            onChange={(e) => setName(e.target.value)}
+            placeholder="Ваше имя"
+            style={{
+              width: "100%",
+              padding: 14,
+              marginBottom: 10,
+              borderRadius: 14,
+              border: "1px solid #d1d5db",
+              fontSize: 16,
+              boxSizing: "border-box",
+            }}
+          />
+
+          <input
+            value={phone}
+            onChange={(e) => setPhone(e.target.value)}
+            placeholder="Телефон"
+            style={{
+              width: "100%",
+              padding: 14,
+              marginBottom: 10,
+              borderRadius: 14,
+              border: "1px solid #d1d5db",
+              fontSize: 16,
+              boxSizing: "border-box",
+            }}
+          />
+
+          <textarea
+            value={comment}
+            onChange={(e) => setComment(e.target.value)}
+            placeholder="Комментарий к заказу"
+            rows={4}
+            style={{
+              width: "100%",
+              padding: 14,
+              borderRadius: 14,
+              border: "1px solid #d1d5db",
+              fontSize: 16,
+              resize: "vertical",
+              boxSizing: "border-box",
+            }}
+          />
+        </div>
+      </section>
 
       <button
         onClick={sendOrder}
         disabled={loading}
         style={{
           width: "100%",
-          padding: 16,
-          background: "#000",
-          color: "#fff",
+          padding: 18,
+          background: "#000000",
+          color: "#ffffff",
           border: "none",
-          borderRadius: 12,
-          fontSize: 16,
+          borderRadius: 16,
+          fontSize: 17,
+          fontWeight: 800,
           cursor: "pointer",
           opacity: loading ? 0.7 : 1,
+          boxShadow: "0 10px 24px rgba(0,0,0,0.25)",
+          marginBottom: 30,
         }}
       >
         {loading ? "Отправка..." : `Оформить заказ (${totalItems})`}
