@@ -146,15 +146,17 @@ export default function Home() {
         body: JSON.stringify(payload),
       });
 
+      const data = await res.json();
+
       if (!res.ok) {
-        throw new Error("Ошибка отправки заказа");
+        alert("Ошибка: " + JSON.stringify(data));
+        throw new Error("Order failed");
       }
 
       setCart([]);
       setSuccessMessage("Заказ успешно отправлен");
       setTimeout(() => setSuccessMessage(""), 2500);
     } catch (error) {
-      alert("Не удалось отправить заказ");
       console.error(error);
     } finally {
       setLoading(false);
