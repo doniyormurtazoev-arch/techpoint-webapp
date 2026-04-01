@@ -1,13 +1,23 @@
 "use client";
 
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
+
+type Category = {
+  id: string;
+  name: string;
+  active: boolean;
+  sort: number;
+};
 
 type Product = {
-  id: number;
+  id: string;
+  category: string;
   title: string;
   price: number;
   status: string;
-  emoji: string;
+  description: string;
+  image: string;
+  active: boolean;
 };
 
 type CartItem = Product & {
@@ -15,70 +25,78 @@ type CartItem = Product & {
 };
 
 export default function Home() {
-  const categories = [
-    "Процессоры",
-    "Видеокарты",
-    "Материнские платы",
-    "SSD",
-    "Наушники",
-    "Клавиатуры",
-    "Мышки",
-  ];
-
-  const products: Product[] = [
-    {
-      id: 1,
-      title: "HyperX Cloud Alpha",
-      price: 1200000,
-      status: "Под заказ",
-      emoji: "🎧",
-    },
-    {
-      id: 2,
-      title: "Logitech G102",
-      price: 280000,
-      status: "В наличии",
-      emoji: "🖱️",
-    },
-    {
-      id: 3,
-      title: "Redragon Kumara",
-      price: 540000,
-      status: "Под заказ",
-      emoji: "⌨️",
-    },
-    {
-      id: 4,
-      title: "Samsung 980 1TB",
-      price: 990000,
-      status: "В наличии",
-      emoji: "💾",
-    },
-  ];
+  const [categories, setCategories] = useState<Category[]>([]);
+  const [products, setProducts] = useState<Product[]>([]);
+  const [selectedCategory, setSelectedCategory] = useState<string>("all");
+  const [search, setSearch] = useState("");
 
   const [cart, setCart] = useState<CartItem[]>([]);
-  const [qtyMap, setQtyMap] = useState<Record<number, number>>(
-    Object.fromEntries(products.map((p) => [p.id, 1]))
-  );
+  const [qtyMap, setQtyMap] = useState<Record<string, number>>({});
 
   const [name, setName] = useState("");
   const [phone, setPhone] = useState("");
   const [comment, setComment] = useState("");
 
-  const [loading, setLoading] = useState(false);
+  const [loadingCatalog, setLoadingCatalog] = useState(true);
+  const [loadingOrder, setLoadingOrder] = useState(false);
   const [successMessage, setSuccessMessage] = useState("");
 
   const formatPrice = (price: number) =>
     new Intl.NumberFormat("ru-RU").format(price) + " сум";
 
-  const decreaseQty = (productId: number) => {
+  useEffect(() => {
+    const loadCatalog = async () => {
+      try {
+        setLoadingCatalog(true);
+        const res = await fetch("/api/catalog", { cache: "no-store" });
+        const data = await res.json();
+
+        if (!res.ok) {
+          alert("Ошибка каталога: " + JSON.stringify(data));
+          return;
+        }
+
+        setCategories(data.categories || []);
+        setProducts(data.products || []);
+
+        const initialQty: Record<string, number> = {};
+        (data.products || []).forEach((p: Product) => {
+          initialQty[p.id] = 1;
+        });
+        setQtyMap(initialQty);
+      } catch (error) {
+        console.error(error);
+        alert("Не удалось загрузить каталог");
+      } finally {
+        setLoadingCatalog(false);
+      }
+    };
+
+    loadCatalog();
+  }, []);
+
+  const filteredProducts = useMemo(() => {
+    return products.filter((p) => {
+      const matchesCategory =
+        selectedCategory === "all" || p.category === selectedCategory;
+
+      const matchesSearch =
+        !search.trim() ||
+        p.title.toLowerCase().includes(search.toLowerCase()) ||
+        p.description.toLowerCase().includes(search.toLowerCase());
+
+      return matchesCategory && matchesSearch;
+    });
+  }, [products, selectedCategory, search]);
+
+  const decreaseQty = (productId: string) => {
     setQtyMap((prev) => ({
       ...prev,
       [productId]: Math.max(1, (prev[productId] || 1) - 1),
     }));
   };
 
-  const increaseQty = (productId: number) => {
+  const increaseQty = (productId: string) => {
     setQtyMap((prev) => ({
       ...prev,
       [productId]: (prev[productId] || 1) + 1,
@@ -133,7 +151,7 @@ export default function Home() {
     }
 
     try {
-      setLoading(true);
+      setLoadingOrder(true);
 
       const tg = (window as any)?.Telegram?.WebApp;
       const user = tg?.initDataUnsafe?.user;
@@ -174,8 +192,8 @@ export default function Home() {
       const data = await res.json();
 
       if (!res.ok) {
-        alert("Ошибка: " + JSON.stringify(data));
-        throw new Error("Order failed");
+        alert("Ошибка заказа: " + JSON.stringify(data));
+        return;
       }
 
       setCart([]);
@@ -186,8 +204,9 @@ export default function Home() {
       setTimeout(() => setSuccessMessage(""), 2500);
     } catch (error) {
       console.error(error);
+      alert("Не удалось отправить заказ");
     } finally {
-      setLoading(false);
+      setLoadingOrder(false);
     }
   };
 
@@ -252,21 +271,22 @@ export default function Home() {
       {successMessage && (
         <div
           style={{
-            background: "#dcfce7",
-            color: "#166534",
+            background: "#d1fae5",
+            color: "#065f46",
             padding: 14,
             borderRadius: 16,
             marginBottom: 18,
             fontWeight: 700,
-            boxShadow: "0 8px 20px rgba(0,0,0,0.12)",
           }}
         >
           {successMessage}
         </div>
       )}
 
-      <div style={{ marginBottom: 28 }}>
+      <div style={{ marginBottom: 18 }}>
         <input
+          value={search}
+          onChange={(e) => setSearch(e.target.value)}
           placeholder="Поиск товара"
           style={{
             width: "100%",
@@ -277,7 +297,6 @@ export default function Home() {
             outline: "none",
             boxSizing: "border-box",
             background: "#ffffff",
-            boxShadow: "0 8px 20px rgba(0,0,0,0.12)",
           }}
         />
       </div>
@@ -287,190 +306,211 @@ export default function Home() {
 
         <div
           style={{
-            display: "grid",
+            display: "flex",
             gap: 10,
+            overflowX: "auto",
+            paddingBottom: 4,
           }}
         >
-          {categories.map((cat, i) => (
-            <div
-              key={i}
+          <button
+            onClick={() => setSelectedCategory("all")}
+            style={{
+              padding: "10px 14px",
+              borderRadius: 999,
+              border: "none",
+              cursor: "pointer",
+              fontWeight: 700,
+              background: selectedCategory === "all" ? "#fff" : "#374151",
+              color: selectedCategory === "all" ? "#111827" : "#fff",
+              whiteSpace: "nowrap",
+            }}
+          >
+            Все
+          </button>
+
+          {categories.map((cat) => (
+            <button
+              key={cat.id}
+              onClick={() => setSelectedCategory(cat.id)}
               style={{
-                background: "rgba(255,255,255,0.95)",
-                color: "#111827",
-                padding: 14,
-                borderRadius: 16,
-                fontWeight: 600,
-                boxShadow: "0 8px 20px rgba(0,0,0,0.12)",
+                padding: "10px 14px",
+                borderRadius: 999,
+                border: "none",
+                cursor: "pointer",
+                fontWeight: 700,
+                background:
+                  selectedCategory === cat.id ? "#fff" : "#374151",
+                color: selectedCategory === cat.id ? "#111827" : "#fff",
+                whiteSpace: "nowrap",
               }}
             >
-              {cat}
-            </div>
+              {cat.name}
+            </button>
           ))}
         </div>
       </section>
 
       <section style={{ marginBottom: 28 }}>
-        <div style={sectionTitleStyle}>Популярные товары</div>
+        <div style={sectionTitleStyle}>Товары</div>
 
-        <div style={{ display: "grid", gap: 14 }}>
-          {products.map((p) => (
-            <div key={p.id} style={cardStyle}>
-              <div
-                style={{
-                  display: "flex",
-                  alignItems: "flex-start",
-                  gap: 12,
-                }}
-              >
-                <div
-                  style={{
-                    width: 54,
-                    height: 54,
-                    borderRadius: 14,
-                    background: "#e5e7eb",
-                    display: "flex",
-                    alignItems: "center",
-                    justifyContent: "center",
-                    fontSize: 24,
-                    flexShrink: 0,
-                  }}
-                >
-                  {p.emoji}
-                </div>
-
-                <div style={{ flex: 1 }}>
-                  <div
+        {loadingCatalog ? (
+          <div style={{ color: "#d1d5db" }}>Загрузка каталога...</div>
+        ) : (
+          <div style={{ display: "grid", gap: 14 }}>
+            {filteredProducts.map((p) => (
+              <div key={p.id} style={cardStyle}>
+                {p.image ? (
+                  <img
+                    src={p.image}
+                    alt={p.title}
                     style={{
-                      fontSize: 18,
-                      fontWeight: 800,
-                      marginBottom: 8,
-                    }}
-                  >
-                    {p.title}
-                  </div>
-
-                  <div
-                    style={{
-                      display: "inline-block",
-                      background: p.status === "В наличии" ? "#dcfce7" : "#fef3c7",
-                      color: p.status === "В наличии" ? "#166534" : "#92400e",
-                      borderRadius: 999,
-                      padding: "6px 10px",
-                      fontSize: 13,
-                      fontWeight: 700,
-                      marginBottom: 10,
-                    }}
-                  >
-                    {p.status}
-                  </div>
-
-                  <div
-                    style={{
-                      fontSize: 22,
-                      fontWeight: 900,
+                      width: "100%",
+                      height: 220,
+                      objectFit: "cover",
+                      borderRadius: 14,
                       marginBottom: 14,
                     }}
-                  >
-                    {formatPrice(p.price)}
-                  </div>
-                </div>
-              </div>
+                  />
+                ) : null}
 
-              <div
-                style={{
-                  display: "flex",
-                  gap: 10,
-                  alignItems: "center",
-                  flexWrap: "wrap",
-                }}
-              >
+                <div
+                  style={{
+                    fontSize: 20,
+                    fontWeight: 800,
+                    marginBottom: 8,
+                  }}
+                >
+                  {p.title}
+                </div>
+
+                <div
+                  style={{
+                    display: "inline-block",
+                    background: p.status === "В наличии" ? "#dcfce7" : "#fef3c7",
+                    color: p.status === "В наличии" ? "#166534" : "#92400e",
+                    borderRadius: 999,
+                    padding: "6px 10px",
+                    fontSize: 13,
+                    fontWeight: 700,
+                    marginBottom: 10,
+                  }}
+                >
+                  {p.status}
+                </div>
+
+                <div
+                  style={{
+                    color: "#4b5563",
+                    marginBottom: 10,
+                    whiteSpace: "pre-line",
+                  }}
+                >
+                  {p.description}
+                </div>
+
+                <div
+                  style={{
+                    fontSize: 22,
+                    fontWeight: 900,
+                    marginBottom: 14,
+                  }}
+                >
+                  {formatPrice(p.price)}
+                </div>
+
                 <div
                   style={{
                     display: "flex",
+                    gap: 10,
                     alignItems: "center",
-                    gap: 8,
-                    background: "#e5e7eb",
-                    padding: 6,
-                    borderRadius: 14,
+                    flexWrap: "wrap",
                   }}
                 >
-                  <button
-                    onClick={() => decreaseQty(p.id)}
+                  <div
                     style={{
-                      width: 36,
-                      height: 36,
-                      border: "none",
-                      borderRadius: 10,
-                      cursor: "pointer",
-                      fontSize: 18,
-                      fontWeight: 700,
-                      background: "#fff",
+                      display: "flex",
+                      alignItems: "center",
+                      gap: 8,
+                      background: "#e5e7eb",
+                      padding: 6,
+                      borderRadius: 14,
                     }}
                   >
-                    -
-                  </button>
+                    <button
+                      onClick={() => decreaseQty(p.id)}
+                      style={{
+                        width: 36,
+                        height: 36,
+                        border: "none",
+                        borderRadius: 10,
+                        cursor: "pointer",
+                        fontSize: 18,
+                        fontWeight: 700,
+                        background: "#fff",
+                      }}
+                    >
+                      -
+                    </button>
 
-                  <span
-                    style={{
-                      minWidth: 28,
-                      textAlign: "center",
-                      fontWeight: 800,
-                      fontSize: 16,
-                    }}
-                  >
-                    {qtyMap[p.id] || 1}
-                  </span>
+                    <span
+                      style={{
+                        minWidth: 28,
+                        textAlign: "center",
+                        fontWeight: 800,
+                        fontSize: 16,
+                      }}
+                    >
+                      {qtyMap[p.id] || 1}
+                    </span>
+
+                    <button
+                      onClick={() => increaseQty(p.id)}
+                      style={{
+                        width: 36,
+                        height: 36,
+                        border: "none",
+                        borderRadius: 10,
+                        cursor: "pointer",
+                        fontSize: 18,
+                        fontWeight: 700,
+                        background: "#fff",
+                      }}
+                    >
+                      +
+                    </button>
+                  </div>
 
                   <button
-                    onClick={() => increaseQty(p.id)}
+                    onClick={() => addToCart(p)}
                     style={{
-                      width: 36,
-                      height: 36,
+                      flex: 1,
+                      minWidth: 180,
+                      padding: "12px 16px",
+                      background: "#111827",
+                      color: "white",
                       border: "none",
-                      borderRadius: 10,
+                      borderRadius: 14,
                       cursor: "pointer",
-                      fontSize: 18,
                       fontWeight: 700,
-                      background: "#fff",
+                      fontSize: 15,
                     }}
                   >
-                    +
+                    Добавить в корзину
                   </button>
                 </div>
-
-                <button
-                  onClick={() => addToCart(p)}
-                  style={{
-                    flex: 1,
-                    minWidth: 180,
-                    padding: "12px 16px",
-                    background: "#111827",
-                    color: "white",
-                    border: "none",
-                    borderRadius: 14,
-                    cursor: "pointer",
-                    fontWeight: 700,
-                    fontSize: 15,
-                  }}
-                >
-                  Добавить в корзину
-                </button>
               </div>
-            </div>
-          ))}
-        </div>
+            ))}
+
+            {!filteredProducts.length && (
+              <div style={{ color: "#d1d5db" }}>Ничего не найдено</div>
+            )}
+          </div>
+        )}
       </section>
 
       <section style={{ marginBottom: 20 }}>
         <div style={cardStyle}>
-          <h3
-            style={{
-              marginTop: 0,
-              marginBottom: 14,
-              fontSize: 22,
-              fontWeight: 800,
-            }}
-          >
+          <h3 style={{ marginTop: 0, marginBottom: 14, fontSize: 22, fontWeight: 800 }}>
             Корзина
           </h3>
 
@@ -491,15 +531,8 @@ export default function Home() {
                     <div style={{ fontWeight: 700, marginBottom: 6 }}>
                       {index + 1}. {item.title}
                     </div>
-                    <div style={{ color: "#4b5563" }}>
-                      Кол-во: {item.qty}
-                    </div>
-                    <div
-                      style={{
-                        marginTop: 6,
-                        fontWeight: 800,
-                      }}
-                    >
+                    <div style={{ color: "#4b5563" }}>Кол-во: {item.qty}</div>
+                    <div style={{ marginTop: 6, fontWeight: 800 }}>
                       {formatPrice(item.price * item.qty)}
                     </div>
                   </div>
@@ -517,12 +550,7 @@ export default function Home() {
               <div style={{ color: "#374151", marginBottom: 6 }}>
                 Всего товаров: {totalItems}
               </div>
-              <div
-                style={{
-                  fontWeight: 900,
-                  fontSize: 20,
-                }}
-              >
+              <div style={{ fontWeight: 900, fontSize: 20 }}>
                 Итого: {formatPrice(totalPrice)}
               </div>
             </>
@@ -532,14 +560,7 @@ export default function Home() {
 
       <section style={{ marginBottom: 20 }}>
         <div style={cardStyle}>
-          <h3
-            style={{
-              marginTop: 0,
-              marginBottom: 14,
-              fontSize: 22,
-              fontWeight: 800,
-            }}
-          >
+          <h3 style={{ marginTop: 0, marginBottom: 14, fontSize: 22, fontWeight: 800 }}>
             Данные клиента
           </h3>
 
@@ -593,7 +614,7 @@ export default function Home() {
 
       <button
         onClick={sendOrder}
-        disabled={loading}
+        disabled={loadingOrder}
         style={{
           width: "100%",
           padding: 18,
@@ -604,12 +625,12 @@ export default function Home() {
           fontSize: 17,
           fontWeight: 800,
           cursor: "pointer",
-          opacity: loading ? 0.7 : 1,
+          opacity: loadingOrder ? 0.7 : 1,
           boxShadow: "0 10px 24px rgba(0,0,0,0.25)",
           marginBottom: 30,
         }}
       >
-        {loading ? "Отправка..." : `Оформить заказ (${totalItems})`}
+        {loadingOrder ? "Отправка..." : `Оформить заказ (${totalItems})`}
       </button>
     </main>
   );
