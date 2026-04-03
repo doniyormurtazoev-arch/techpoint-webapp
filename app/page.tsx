@@ -88,6 +88,8 @@ export default function Home() {
     }
   }, [name]);
 
+  const featuredProducts = useMemo(() => products.slice(0, 4), [products]);
+
   const filteredProducts = useMemo(() => {
     return products.filter((p) => {
       const matchesCategory =
@@ -144,7 +146,7 @@ export default function Home() {
     });
 
     setSuccessMessage(`Добавлено: ${product.title} x${qtyToAdd}`);
-    setTimeout(() => setSuccessMessage(""), 1500);
+    setTimeout(() => setSuccessMessage(""), 1400);
   };
 
   const changeCartQty = (productId: string, delta: number) => {
@@ -163,6 +165,20 @@ export default function Home() {
 
   const clearCart = () => {
     setCart([]);
+  };
+
+  const buyNow = (product: Product) => {
+    const qtyToAdd = qtyMap[product.id] || 1;
+
+    setCart([
+      {
+        ...product,
+        qty: qtyToAdd,
+      },
+    ]);
+    setActiveTab("cart");
+    setSuccessMessage(`Готово к оформлению: ${product.title}`);
+    setTimeout(() => setSuccessMessage(""), 1400);
   };
 
   const sendOrder = async () => {
@@ -242,29 +258,107 @@ export default function Home() {
     }
   };
 
-  const sectionTitleStyle: React.CSSProperties = {
-    fontSize: 24,
-    fontWeight: 800,
-    marginBottom: 14,
-    color: "#ffffff",
+  const shellStyle: React.CSSProperties = {
+    minHeight: "100vh",
+    background:
+      "linear-gradient(180deg, #0b0b0c 0%, #141414 45%, #1c1c1f 100%)",
+    padding: 16,
+    paddingBottom: 96,
+    fontFamily:
+      "Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, sans-serif",
+    color: "white",
   };
 
-  const cardStyle: React.CSSProperties = {
-    background: "#f8fafc",
-    color: "#111827",
-    borderRadius: 18,
-    padding: 16,
-    boxShadow: "0 8px 24px rgba(0,0,0,0.12)",
+  const glassStyle: React.CSSProperties = {
+    background: "rgba(255,255,255,0.07)",
+    border: "1px solid rgba(255,255,255,0.08)",
+    backdropFilter: "blur(10px)",
+    borderRadius: 22,
   };
+
+  const sectionTitleStyle: React.CSSProperties = {
+    fontSize: 24,
+    fontWeight: 900,
+    marginBottom: 14,
+    color: "#ffffff",
+    letterSpacing: "-0.02em",
+  };
+
+  const whiteCardStyle: React.CSSProperties = {
+    background: "#ffffff",
+    color: "#111827",
+    borderRadius: 20,
+    padding: 14,
+    boxShadow: "0 10px 30px rgba(0,0,0,0.16)",
+  };
+
+  const statusStyle = (status: string): React.CSSProperties => ({
+    display: "inline-block",
+    background: status === "В наличии" ? "#dcfce7" : "#fef3c7",
+    color: status === "В наличии" ? "#166534" : "#92400e",
+    borderRadius: 999,
+    padding: "6px 10px",
+    fontSize: 12,
+    fontWeight: 800,
+    marginBottom: 10,
+  });
 
   const renderHome = () => (
     <>
-      <section style={{ marginBottom: 28 }}>
-        <div style={sectionTitleStyle}>Категории</div>
+      <section style={{ marginBottom: 22 }}>
+        <div
+          style={{
+            ...glassStyle,
+            padding: 18,
+            boxShadow: "0 10px 30px rgba(0,0,0,0.22)",
+          }}
+        >
+          <div
+            style={{
+              fontSize: 32,
+              fontWeight: 900,
+              letterSpacing: "-0.03em",
+              marginBottom: 6,
+            }}
+          >
+            TechPoint
+          </div>
+          <div
+            style={{
+              fontSize: 15,
+              color: "#d4d4d8",
+              lineHeight: 1.5,
+              marginBottom: 16,
+            }}
+          >
+            Техника, комплектующие и аксессуары — быстро, удобно, в одном месте.
+          </div>
 
+          <button
+            onClick={() => setActiveTab("catalog")}
+            style={{
+              width: "100%",
+              padding: 14,
+              border: "none",
+              borderRadius: 16,
+              background: "#ffffff",
+              color: "#111827",
+              fontWeight: 800,
+              fontSize: 15,
+              cursor: "pointer",
+            }}
+          >
+            Перейти в каталог
+          </button>
+        </div>
+      </section>
+
+      <section style={{ marginBottom: 26 }}>
+        <div style={sectionTitleStyle}>Категории</div>
         <div
           style={{
             display: "grid",
+            gridTemplateColumns: "repeat(2, minmax(0, 1fr))",
             gap: 10,
           }}
         >
@@ -276,15 +370,15 @@ export default function Home() {
                 setActiveTab("catalog");
               }}
               style={{
-                background: "rgba(255,255,255,0.95)",
+                background: "#ffffff",
                 color: "#111827",
                 padding: 14,
-                borderRadius: 16,
-                fontWeight: 700,
-                boxShadow: "0 8px 20px rgba(0,0,0,0.12)",
+                borderRadius: 18,
                 border: "none",
                 textAlign: "left",
+                fontWeight: 800,
                 cursor: "pointer",
+                boxShadow: "0 10px 24px rgba(0,0,0,0.14)",
               }}
             >
               {cat.name}
@@ -293,59 +387,73 @@ export default function Home() {
         </div>
       </section>
 
-      <section style={{ marginBottom: 28 }}>
-        <div style={sectionTitleStyle}>Популярные товары</div>
+      <section style={{ marginBottom: 26 }}>
+        <div style={sectionTitleStyle}>Хиты</div>
 
         {loadingCatalog ? (
           <div style={{ color: "#d1d5db" }}>Загрузка каталога...</div>
         ) : (
-          <div style={{ display: "grid", gap: 14 }}>
-            {products.slice(0, 4).map((p) => (
-              <div key={p.id} style={cardStyle}>
+          <div
+            style={{
+              display: "grid",
+              gridTemplateColumns: "repeat(2, minmax(0, 1fr))",
+              gap: 12,
+            }}
+          >
+            {featuredProducts.map((p) => (
+              <div key={p.id} style={whiteCardStyle}>
                 {p.image ? (
                   <img
                     src={p.image}
                     alt={p.title}
                     style={{
                       width: "100%",
-                      height: 180,
+                      height: 140,
                       objectFit: "cover",
                       borderRadius: 14,
-                      marginBottom: 14,
+                      marginBottom: 10,
                     }}
                   />
                 ) : null}
 
-                <div style={{ fontSize: 20, fontWeight: 800, marginBottom: 8 }}>
+                <div
+                  style={{
+                    fontWeight: 800,
+                    fontSize: 15,
+                    lineHeight: 1.3,
+                    minHeight: 40,
+                    marginBottom: 8,
+                  }}
+                >
                   {p.title}
                 </div>
 
-                <div style={{ color: "#4b5563", marginBottom: 10 }}>
-                  {p.description}
-                </div>
+                <div style={statusStyle(p.status)}>{p.status}</div>
 
-                <div style={{ fontSize: 22, fontWeight: 900, marginBottom: 14 }}>
+                <div
+                  style={{
+                    fontWeight: 900,
+                    fontSize: 17,
+                    marginBottom: 10,
+                  }}
+                >
                   {formatPrice(p.price)}
                 </div>
 
                 <button
-                  onClick={() => {
-                    setSelectedCategory("all");
-                    setActiveTab("catalog");
-                  }}
+                  onClick={() => buyNow(p)}
                   style={{
                     width: "100%",
-                    padding: "12px 16px",
-                    background: "#111827",
-                    color: "white",
+                    padding: 10,
                     border: "none",
-                    borderRadius: 14,
+                    borderRadius: 12,
+                    background: "#111827",
+                    color: "#fff",
+                    fontWeight: 800,
                     cursor: "pointer",
-                    fontWeight: 700,
-                    fontSize: 15,
                   }}
                 >
-                  Перейти в каталог
+                  Купить
                 </button>
               </div>
             ))}
@@ -357,7 +465,7 @@ export default function Home() {
 
   const renderCatalog = () => (
     <>
-      <div style={{ marginBottom: 18 }}>
+      <section style={{ marginBottom: 18 }}>
         <input
           value={search}
           onChange={(e) => setSearch(e.target.value)}
@@ -366,17 +474,18 @@ export default function Home() {
             width: "100%",
             padding: 14,
             borderRadius: 16,
-            border: "1px solid #d1d5db",
+            border: "1px solid #27272a",
             fontSize: 16,
             outline: "none",
             boxSizing: "border-box",
             background: "#ffffff",
+            color: "#111827",
           }}
         />
-      </div>
+      </section>
 
-      <section style={{ marginBottom: 28 }}>
-        <div style={sectionTitleStyle}>Категории</div>
+      <section style={{ marginBottom: 22 }}>
+        <div style={sectionTitleStyle}>Каталог</div>
 
         <div
           style={{
@@ -393,8 +502,8 @@ export default function Home() {
               borderRadius: 999,
               border: "none",
               cursor: "pointer",
-              fontWeight: 700,
-              background: selectedCategory === "all" ? "#fff" : "#374151",
+              fontWeight: 800,
+              background: selectedCategory === "all" ? "#fff" : "#27272a",
               color: selectedCategory === "all" ? "#111827" : "#fff",
               whiteSpace: "nowrap",
             }}
@@ -411,8 +520,8 @@ export default function Home() {
                 borderRadius: 999,
                 border: "none",
                 cursor: "pointer",
-                fontWeight: 700,
-                background: selectedCategory === cat.id ? "#fff" : "#374151",
+                fontWeight: 800,
+                background: selectedCategory === cat.id ? "#fff" : "#27272a",
                 color: selectedCategory === cat.id ? "#111827" : "#fff",
                 whiteSpace: "nowrap",
               }}
@@ -423,140 +532,153 @@ export default function Home() {
         </div>
       </section>
 
-      <section style={{ marginBottom: 28 }}>
-        <div style={sectionTitleStyle}>Товары</div>
-
+      <section style={{ marginBottom: 26 }}>
         {loadingCatalog ? (
           <div style={{ color: "#d1d5db" }}>Загрузка каталога...</div>
         ) : (
-          <div style={{ display: "grid", gap: 14 }}>
+          <div
+            style={{
+              display: "grid",
+              gridTemplateColumns: "repeat(2, minmax(0, 1fr))",
+              gap: 12,
+            }}
+          >
             {filteredProducts.map((p) => (
-              <div key={p.id} style={cardStyle}>
+              <div key={p.id} style={whiteCardStyle}>
                 {p.image ? (
                   <img
                     src={p.image}
                     alt={p.title}
                     style={{
                       width: "100%",
-                      height: 220,
+                      height: 160,
                       objectFit: "cover",
                       borderRadius: 14,
-                      marginBottom: 14,
+                      marginBottom: 10,
                     }}
                   />
                 ) : null}
 
-                <div style={{ fontSize: 20, fontWeight: 800, marginBottom: 8 }}>
+                <div
+                  style={{
+                    fontWeight: 800,
+                    fontSize: 15,
+                    lineHeight: 1.3,
+                    minHeight: 42,
+                    marginBottom: 8,
+                  }}
+                >
                   {p.title}
                 </div>
 
-                <div
-                  style={{
-                    display: "inline-block",
-                    background: p.status === "В наличии" ? "#dcfce7" : "#fef3c7",
-                    color: p.status === "В наличии" ? "#166534" : "#92400e",
-                    borderRadius: 999,
-                    padding: "6px 10px",
-                    fontSize: 13,
-                    fontWeight: 700,
-                    marginBottom: 10,
-                  }}
-                >
-                  {p.status}
-                </div>
+                <div style={statusStyle(p.status)}>{p.status}</div>
 
                 <div
                   style={{
                     color: "#4b5563",
-                    marginBottom: 10,
-                    whiteSpace: "pre-line",
+                    fontSize: 12,
+                    lineHeight: 1.4,
+                    minHeight: 34,
+                    marginBottom: 8,
+                    overflow: "hidden",
                   }}
                 >
                   {p.description}
                 </div>
 
-                <div style={{ fontSize: 22, fontWeight: 900, marginBottom: 14 }}>
+                <div
+                  style={{
+                    fontWeight: 900,
+                    fontSize: 17,
+                    marginBottom: 10,
+                  }}
+                >
                   {formatPrice(p.price)}
                 </div>
 
                 <div
                   style={{
                     display: "flex",
-                    gap: 10,
                     alignItems: "center",
-                    flexWrap: "wrap",
+                    justifyContent: "space-between",
+                    gap: 8,
+                    marginBottom: 10,
                   }}
                 >
-                  <div
+                  <button
+                    onClick={() => decreaseQty(p.id)}
                     style={{
-                      display: "flex",
-                      alignItems: "center",
-                      gap: 8,
+                      width: 30,
+                      height: 30,
+                      borderRadius: 10,
+                      border: "none",
                       background: "#e5e7eb",
-                      padding: 6,
-                      borderRadius: 14,
+                      fontWeight: 800,
+                      cursor: "pointer",
                     }}
                   >
-                    <button
-                      onClick={() => decreaseQty(p.id)}
-                      style={{
-                        width: 36,
-                        height: 36,
-                        border: "none",
-                        borderRadius: 10,
-                        cursor: "pointer",
-                        fontSize: 18,
-                        fontWeight: 700,
-                        background: "#fff",
-                      }}
-                    >
-                      -
-                    </button>
+                    -
+                  </button>
 
-                    <span
-                      style={{
-                        minWidth: 28,
-                        textAlign: "center",
-                        fontWeight: 800,
-                        fontSize: 16,
-                      }}
-                    >
-                      {qtyMap[p.id] || 1}
-                    </span>
-
-                    <button
-                      onClick={() => increaseQty(p.id)}
-                      style={{
-                        width: 36,
-                        height: 36,
-                        border: "none",
-                        borderRadius: 10,
-                        cursor: "pointer",
-                        fontSize: 18,
-                        fontWeight: 700,
-                        background: "#fff",
-                      }}
-                    >
-                      +
-                    </button>
+                  <div
+                    style={{
+                      minWidth: 24,
+                      textAlign: "center",
+                      fontWeight: 800,
+                    }}
+                  >
+                    {qtyMap[p.id] || 1}
                   </div>
 
                   <button
-                    onClick={() => addToCart(p)}
+                    onClick={() => increaseQty(p.id)}
                     style={{
-                      flex: 1,
-                      minWidth: 180,
-                      padding: "12px 16px",
-                      background: "#111827",
-                      color: "white",
+                      width: 30,
+                      height: 30,
+                      borderRadius: 10,
                       border: "none",
-                      borderRadius: 14,
+                      background: "#e5e7eb",
+                      fontWeight: 800,
                       cursor: "pointer",
-                      fontWeight: 700,
-                      fontSize: 15,
                     }}
                   >
-                    Добавить в корзину
+                    +
+                  </button>
+                </div>
+
+                <div style={{ display: "grid", gap: 8 }}>
+                  <button
+                    onClick={() => addToCart(p)}
+                    style={{
+                      width: "100%",
+                      padding: 10,
+                      border: "none",
+                      borderRadius: 12,
+                      background: "#111827",
+                      color: "#fff",
+                      fontWeight: 800,
+                      cursor: "pointer",
+                      fontSize: 13,
+                    }}
+                  >
+                    В корзину
+                  </button>
+
+                  <button
+                    onClick={() => buyNow(p)}
+                    style={{
+                      width: "100%",
+                      padding: 10,
+                      border: "1px solid #d1d5db",
+                      borderRadius: 12,
+                      background: "#fff",
+                      color: "#111827",
+                      fontWeight: 800,
+                      cursor: "pointer",
+                      fontSize: 13,
+                    }}
+                  >
+                    Купить сейчас
                   </button>
                 </div>
               </div>
@@ -573,8 +695,15 @@ export default function Home() {
 
   const renderCart = () => (
     <section style={{ marginBottom: 20 }}>
-      <div style={cardStyle}>
-        <h3 style={{ marginTop: 0, marginBottom: 14, fontSize: 22, fontWeight: 800 }}>
+      <div style={whiteCardStyle}>
+        <h3
+          style={{
+            marginTop: 0,
+            marginBottom: 14,
+            fontSize: 22,
+            fontWeight: 900,
+          }}
+        >
           Корзина
         </h3>
 
@@ -589,10 +718,10 @@ export default function Home() {
                   style={{
                     padding: 12,
                     borderRadius: 14,
-                    background: "#eef2f7",
+                    background: "#f3f4f6",
                   }}
                 >
-                  <div style={{ fontWeight: 700, marginBottom: 6 }}>
+                  <div style={{ fontWeight: 800, marginBottom: 6 }}>
                     {index + 1}. {item.title}
                   </div>
 
@@ -617,7 +746,13 @@ export default function Home() {
                       -
                     </button>
 
-                    <span style={{ minWidth: 20, textAlign: "center", fontWeight: 700 }}>
+                    <span
+                      style={{
+                        minWidth: 20,
+                        textAlign: "center",
+                        fontWeight: 800,
+                      }}
+                    >
                       {item.qty}
                     </span>
 
@@ -650,7 +785,7 @@ export default function Home() {
                     </button>
                   </div>
 
-                  <div style={{ marginTop: 6, fontWeight: 800 }}>
+                  <div style={{ fontWeight: 900 }}>
                     {formatPrice(item.price * item.qty)}
                   </div>
                 </div>
@@ -668,7 +803,13 @@ export default function Home() {
             <div style={{ color: "#374151", marginBottom: 6 }}>
               Всего товаров: {totalItems}
             </div>
-            <div style={{ fontWeight: 900, fontSize: 20, marginBottom: 14 }}>
+            <div
+              style={{
+                fontWeight: 900,
+                fontSize: 20,
+                marginBottom: 14,
+              }}
+            >
               Итого: {formatPrice(totalPrice)}
             </div>
 
@@ -684,7 +825,7 @@ export default function Home() {
                   border: "none",
                   borderRadius: 14,
                   fontSize: 16,
-                  fontWeight: 800,
+                  fontWeight: 900,
                   cursor: "pointer",
                   opacity: loadingOrder ? 0.7 : 1,
                 }}
@@ -702,7 +843,7 @@ export default function Home() {
                   border: "none",
                   borderRadius: 14,
                   fontSize: 15,
-                  fontWeight: 700,
+                  fontWeight: 800,
                   cursor: "pointer",
                 }}
               >
@@ -721,8 +862,15 @@ export default function Home() {
 
     return (
       <section style={{ marginBottom: 20 }}>
-        <div style={cardStyle}>
-          <h3 style={{ marginTop: 0, marginBottom: 14, fontSize: 22, fontWeight: 800 }}>
+        <div style={whiteCardStyle}>
+          <h3
+            style={{
+              marginTop: 0,
+              marginBottom: 14,
+              fontSize: 22,
+              fontWeight: 900,
+            }}
+          >
             Личный кабинет
           </h3>
 
@@ -775,13 +923,15 @@ export default function Home() {
 
           <div
             style={{
-              background: "#eef2f7",
+              background: "#f3f4f6",
               borderRadius: 14,
               padding: 14,
               color: "#374151",
             }}
           >
-            <div style={{ fontWeight: 800, marginBottom: 8 }}>Данные Telegram</div>
+            <div style={{ fontWeight: 900, marginBottom: 8 }}>
+              Данные Telegram
+            </div>
             <div>Имя: {user?.first_name || "-"}</div>
             <div>Фамилия: {user?.last_name || "-"}</div>
             <div>Username: {user?.username ? `@${user.username}` : "-"}</div>
@@ -792,33 +942,20 @@ export default function Home() {
   };
 
   return (
-    <main
-      style={{
-        minHeight: "100vh",
-        background:
-          "linear-gradient(180deg, #1f2937 0%, #111827 50%, #0b1220 100%)",
-        padding: 18,
-        paddingBottom: 90,
-        fontFamily:
-          "Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, sans-serif",
-        color: "white",
-      }}
-    >
+    <main style={shellStyle}>
       <div
         style={{
-          marginBottom: 20,
+          ...glassStyle,
           padding: 18,
-          borderRadius: 22,
-          background: "rgba(255,255,255,0.08)",
-          border: "1px solid rgba(255,255,255,0.08)",
-          backdropFilter: "blur(8px)",
+          marginBottom: 18,
+          boxShadow: "0 10px 28px rgba(0,0,0,0.22)",
         }}
       >
         <div
           style={{
-            fontSize: 32,
+            fontSize: 30,
             fontWeight: 900,
-            letterSpacing: "-0.02em",
+            letterSpacing: "-0.03em",
             marginBottom: 6,
           }}
         >
@@ -826,24 +963,23 @@ export default function Home() {
         </div>
         <div
           style={{
-            fontSize: 15,
-            color: "#d1d5db",
-            lineHeight: 1.5,
+            fontSize: 14,
+            color: "#d4d4d8",
           }}
         >
-          Электроника и комплектующие под заказ
+          Техника и комплектующие в чёрно-белом стиле
         </div>
       </div>
 
       {successMessage && (
         <div
           style={{
-            background: "#d1fae5",
-            color: "#065f46",
+            background: "#dcfce7",
+            color: "#166534",
             padding: 14,
             borderRadius: 16,
             marginBottom: 18,
-            fontWeight: 700,
+            fontWeight: 800,
           }}
         >
           {successMessage}
@@ -861,15 +997,15 @@ export default function Home() {
           left: 12,
           right: 12,
           bottom: 12,
-          background: "rgba(17,24,39,0.95)",
+          background: "rgba(17,17,17,0.96)",
           border: "1px solid rgba(255,255,255,0.08)",
           borderRadius: 20,
           padding: 10,
           display: "grid",
           gridTemplateColumns: "repeat(4, 1fr)",
           gap: 8,
-          backdropFilter: "blur(10px)",
-          boxShadow: "0 10px 30px rgba(0,0,0,0.3)",
+          backdropFilter: "blur(12px)",
+          boxShadow: "0 12px 32px rgba(0,0,0,0.32)",
         }}
       >
         {[
@@ -879,6 +1015,7 @@ export default function Home() {
           { key: "profile", label: "Кабинет", icon: "👤" },
         ].map((item) => {
           const isActive = activeTab === item.key;
+
           return (
             <button
               key={item.key}
@@ -889,13 +1026,37 @@ export default function Home() {
                 padding: "10px 6px",
                 background: isActive ? "#ffffff" : "transparent",
                 color: isActive ? "#111827" : "#ffffff",
-                fontWeight: 700,
+                fontWeight: 800,
                 cursor: "pointer",
                 fontSize: 12,
+                position: "relative",
               }}
             >
               <div style={{ fontSize: 18, marginBottom: 4 }}>{item.icon}</div>
               <div>{item.label}</div>
+
+              {item.key === "cart" && totalItems > 0 && (
+                <span
+                  style={{
+                    position: "absolute",
+                    top: 4,
+                    right: 10,
+                    minWidth: 18,
+                    height: 18,
+                    padding: "0 4px",
+                    borderRadius: 999,
+                    background: isActive ? "#111827" : "#ffffff",
+                    color: isActive ? "#ffffff" : "#111827",
+                    fontSize: 11,
+                    fontWeight: 900,
+                    display: "flex",
+                    alignItems: "center",
+                    justifyContent: "center",
+                  }}
+                >
+                  {totalItems}
+                </span>
+              )}
             </button>
           );
         })}
