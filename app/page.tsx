@@ -24,6 +24,8 @@ type CartItem = Product & {
   qty: number;
 };
 
+type Tab = "home" | "catalog" | "cart" | "profile";
+
 export default function Home() {
   const [categories, setCategories] = useState<Category[]>([]);
   const [products, setProducts] = useState<Product[]>([]);
@@ -37,6 +39,7 @@ export default function Home() {
   const [phone, setPhone] = useState("");
   const [comment, setComment] = useState("");
 
+  const [activeTab, setActiveTab] = useState<Tab>("home");
   const [loadingCatalog, setLoadingCatalog] = useState(true);
   const [loadingOrder, setLoadingOrder] = useState(false);
   const [successMessage, setSuccessMessage] = useState("");
@@ -75,6 +78,16 @@ export default function Home() {
     loadCatalog();
   }, []);
 
+  useEffect(() => {
+    const tg = (window as any)?.Telegram?.WebApp;
+    const user = tg?.initDataUnsafe?.user;
+
+    if (user && !name) {
+      const fullName = [user.first_name, user.last_name].filter(Boolean).join(" ");
+      if (fullName) setName(fullName);
+    }
+  }, [name]);
+
   const filteredProducts = useMemo(() => {
     return products.filter((p) => {
       const matchesCategory =
@@ -88,6 +101,16 @@ export default function Home() {
       return matchesCategory && matchesSearch;
     });
   }, [products, selectedCategory, search]);
+
+  const totalItems = useMemo(
+    () => cart.reduce((sum, item) => sum + item.qty, 0),
+    [cart]
+  );
+
+  const totalPrice = useMemo(
+    () => cart.reduce((sum, item) => sum + item.price * item.qty, 0),
+    [cart]
+  );
 
   const decreaseQty = (productId: string) => {
     setQtyMap((prev) => ({
@@ -124,15 +147,23 @@ export default function Home() {
     setTimeout(() => setSuccessMessage(""), 1500);
   };
 
-  const totalItems = useMemo(
-    () => cart.reduce((sum, item) => sum + item.qty, 0),
-    [cart]
-  );
+  const changeCartQty = (productId: string, delta: number) => {
+    setCart((prev) =>
+      prev
+        .map((item) =>
+          item.id === productId ? { ...item, qty: item.qty + delta } : item
+        )
+        .filter((item) => item.qty > 0)
+    );
+  };
 
-  const totalPrice = useMemo(
-    () => cart.reduce((sum, item) => sum + item.price * item.qty, 0),
-    [cart]
-  );
+  const removeFromCart = (productId: string) => {
+    setCart((prev) => prev.filter((item) => item.id !== productId));
+  };
+
+  const clearCart = () => {
+    setCart([]);
+  };
 
   const sendOrder = async () => {
     if (cart.length === 0) {
@@ -141,11 +172,13 @@ export default function Home() {
     }
 
     if (!name.trim()) {
+      setActiveTab("profile");
       alert("Введите имя");
       return;
     }
 
     if (!phone.trim()) {
+      setActiveTab("profile");
       alert("Введите телефон");
       return;
     }
@@ -197,11 +230,10 @@ export default function Home() {
       }
 
       setCart([]);
-      setName("");
-      setPhone("");
       setComment("");
       setSuccessMessage("Заказ успешно отправлен");
       setTimeout(() => setSuccessMessage(""), 2500);
+      setActiveTab("home");
     } catch (error) {
       console.error(error);
       alert("Не удалось отправить заказ");
@@ -225,64 +257,106 @@ export default function Home() {
     boxShadow: "0 8px 24px rgba(0,0,0,0.12)",
   };
 
-  return (
-    <main
-      style={{
-        minHeight: "100vh",
-        background:
-          "linear-gradient(180deg, #1f2937 0%, #111827 50%, #0b1220 100%)",
-        padding: 18,
-        fontFamily:
-          "Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, sans-serif",
-        color: "white",
-      }}
-    >
-      <div
-        style={{
-          marginBottom: 20,
-          padding: 18,
-          borderRadius: 22,
-          background: "rgba(255,255,255,0.08)",
-          border: "1px solid rgba(255,255,255,0.08)",
-          backdropFilter: "blur(8px)",
-        }}
-      >
-        <div
-          style={{
-            fontSize: 32,
-            fontWeight: 900,
-            letterSpacing: "-0.02em",
-            marginBottom: 6,
-          }}
-        >
-          TechPoint
-        </div>
-        <div
-          style={{
-            fontSize: 15,
-            color: "#d1d5db",
-            lineHeight: 1.5,
-          }}
-        >
-          Электроника и комплектующие под заказ
-        </div>
-      </div>
+  const renderHome = () => (
+    <>
+      <section style={{ marginBottom: 28 }}>
+        <div style={sectionTitleStyle}>Категории</div>
 
-      {successMessage && (
         <div
           style={{
-            background: "#d1fae5",
-            color: "#065f46",
-            padding: 14,
-            borderRadius: 16,
-            marginBottom: 18,
-            fontWeight: 700,
+            display: "grid",
+            gap: 10,
           }}
         >
-          {successMessage}
+          {categories.map((cat) => (
+            <button
+              key={cat.id}
+              onClick={() => {
+                setSelectedCategory(cat.id);
+                setActiveTab("catalog");
+              }}
+              style={{
+                background: "rgba(255,255,255,0.95)",
+                color: "#111827",
+                padding: 14,
+                borderRadius: 16,
+                fontWeight: 700,
+                boxShadow: "0 8px 20px rgba(0,0,0,0.12)",
+                border: "none",
+                textAlign: "left",
+                cursor: "pointer",
+              }}
+            >
+              {cat.name}
+            </button>
+          ))}
         </div>
-      )}
+      </section>
 
+      <section style={{ marginBottom: 28 }}>
+        <div style={sectionTitleStyle}>Популярные товары</div>
+
+        {loadingCatalog ? (
+          <div style={{ color: "#d1d5db" }}>Загрузка каталога...</div>
+        ) : (
+          <div style={{ display: "grid", gap: 14 }}>
+            {products.slice(0, 4).map((p) => (
+              <div key={p.id} style={cardStyle}>
+                {p.image ? (
+                  <img
+                    src={p.image}
+                    alt={p.title}
+                    style={{
+                      width: "100%",
+                      height: 180,
+                      objectFit: "cover",
+                      borderRadius: 14,
+                      marginBottom: 14,
+                    }}
+                  />
+                ) : null}
+
+                <div style={{ fontSize: 20, fontWeight: 800, marginBottom: 8 }}>
+                  {p.title}
+                </div>
+
+                <div style={{ color: "#4b5563", marginBottom: 10 }}>
+                  {p.description}
+                </div>
+
+                <div style={{ fontSize: 22, fontWeight: 900, marginBottom: 14 }}>
+                  {formatPrice(p.price)}
+                </div>
+
+                <button
+                  onClick={() => {
+                    setSelectedCategory("all");
+                    setActiveTab("catalog");
+                  }}
+                  style={{
+                    width: "100%",
+                    padding: "12px 16px",
+                    background: "#111827",
+                    color: "white",
+                    border: "none",
+                    borderRadius: 14,
+                    cursor: "pointer",
+                    fontWeight: 700,
+                    fontSize: 15,
+                  }}
+                >
+                  Перейти в каталог
+                </button>
+              </div>
+            ))}
+          </div>
+        )}
+      </section>
+    </>
+  );
+
+  const renderCatalog = () => (
+    <>
       <div style={{ marginBottom: 18 }}>
         <input
           value={search}
@@ -338,8 +412,7 @@ export default function Home() {
                 border: "none",
                 cursor: "pointer",
                 fontWeight: 700,
-                background:
-                  selectedCategory === cat.id ? "#fff" : "#374151",
+                background: selectedCategory === cat.id ? "#fff" : "#374151",
                 color: selectedCategory === cat.id ? "#111827" : "#fff",
                 whiteSpace: "nowrap",
               }}
@@ -373,13 +446,7 @@ export default function Home() {
                   />
                 ) : null}
 
-                <div
-                  style={{
-                    fontSize: 20,
-                    fontWeight: 800,
-                    marginBottom: 8,
-                  }}
-                >
+                <div style={{ fontSize: 20, fontWeight: 800, marginBottom: 8 }}>
                   {p.title}
                 </div>
 
@@ -408,13 +475,7 @@ export default function Home() {
                   {p.description}
                 </div>
 
-                <div
-                  style={{
-                    fontSize: 22,
-                    fontWeight: 900,
-                    marginBottom: 14,
-                  }}
-                >
+                <div style={{ fontSize: 22, fontWeight: 900, marginBottom: 14 }}>
                   {formatPrice(p.price)}
                 </div>
 
@@ -507,61 +568,162 @@ export default function Home() {
           </div>
         )}
       </section>
+    </>
+  );
 
-      <section style={{ marginBottom: 20 }}>
-        <div style={cardStyle}>
-          <h3 style={{ marginTop: 0, marginBottom: 14, fontSize: 22, fontWeight: 800 }}>
-            Корзина
-          </h3>
+  const renderCart = () => (
+    <section style={{ marginBottom: 20 }}>
+      <div style={cardStyle}>
+        <h3 style={{ marginTop: 0, marginBottom: 14, fontSize: 22, fontWeight: 800 }}>
+          Корзина
+        </h3>
 
-          {cart.length === 0 ? (
-            <p style={{ color: "#6b7280", margin: 0 }}>Пока пусто</p>
-          ) : (
-            <>
-              <div style={{ display: "grid", gap: 10 }}>
-                {cart.map((item, index) => (
+        {cart.length === 0 ? (
+          <p style={{ color: "#6b7280", margin: 0 }}>Пока пусто</p>
+        ) : (
+          <>
+            <div style={{ display: "grid", gap: 10 }}>
+              {cart.map((item, index) => (
+                <div
+                  key={item.id}
+                  style={{
+                    padding: 12,
+                    borderRadius: 14,
+                    background: "#eef2f7",
+                  }}
+                >
+                  <div style={{ fontWeight: 700, marginBottom: 6 }}>
+                    {index + 1}. {item.title}
+                  </div>
+
                   <div
-                    key={item.id}
                     style={{
-                      padding: 12,
-                      borderRadius: 14,
-                      background: "#eef2f7",
+                      display: "flex",
+                      alignItems: "center",
+                      gap: 8,
+                      marginBottom: 8,
                     }}
                   >
-                    <div style={{ fontWeight: 700, marginBottom: 6 }}>
-                      {index + 1}. {item.title}
-                    </div>
-                    <div style={{ color: "#4b5563" }}>Кол-во: {item.qty}</div>
-                    <div style={{ marginTop: 6, fontWeight: 800 }}>
-                      {formatPrice(item.price * item.qty)}
-                    </div>
+                    <button
+                      onClick={() => changeCartQty(item.id, -1)}
+                      style={{
+                        width: 32,
+                        height: 32,
+                        border: "none",
+                        borderRadius: 8,
+                        cursor: "pointer",
+                      }}
+                    >
+                      -
+                    </button>
+
+                    <span style={{ minWidth: 20, textAlign: "center", fontWeight: 700 }}>
+                      {item.qty}
+                    </span>
+
+                    <button
+                      onClick={() => changeCartQty(item.id, 1)}
+                      style={{
+                        width: 32,
+                        height: 32,
+                        border: "none",
+                        borderRadius: 8,
+                        cursor: "pointer",
+                      }}
+                    >
+                      +
+                    </button>
+
+                    <button
+                      onClick={() => removeFromCart(item.id)}
+                      style={{
+                        marginLeft: "auto",
+                        padding: "8px 12px",
+                        border: "none",
+                        borderRadius: 10,
+                        background: "#111827",
+                        color: "#fff",
+                        cursor: "pointer",
+                      }}
+                    >
+                      Удалить
+                    </button>
                   </div>
-                ))}
-              </div>
 
-              <hr
+                  <div style={{ marginTop: 6, fontWeight: 800 }}>
+                    {formatPrice(item.price * item.qty)}
+                  </div>
+                </div>
+              ))}
+            </div>
+
+            <hr
+              style={{
+                margin: "16px 0",
+                border: 0,
+                borderTop: "1px solid #d1d5db",
+              }}
+            />
+
+            <div style={{ color: "#374151", marginBottom: 6 }}>
+              Всего товаров: {totalItems}
+            </div>
+            <div style={{ fontWeight: 900, fontSize: 20, marginBottom: 14 }}>
+              Итого: {formatPrice(totalPrice)}
+            </div>
+
+            <div style={{ display: "grid", gap: 10 }}>
+              <button
+                onClick={sendOrder}
+                disabled={loadingOrder}
                 style={{
-                  margin: "16px 0",
-                  border: 0,
-                  borderTop: "1px solid #d1d5db",
+                  width: "100%",
+                  padding: 16,
+                  background: "#000000",
+                  color: "#ffffff",
+                  border: "none",
+                  borderRadius: 14,
+                  fontSize: 16,
+                  fontWeight: 800,
+                  cursor: "pointer",
+                  opacity: loadingOrder ? 0.7 : 1,
                 }}
-              />
+              >
+                {loadingOrder ? "Отправка..." : `Оформить заказ (${totalItems})`}
+              </button>
 
-              <div style={{ color: "#374151", marginBottom: 6 }}>
-                Всего товаров: {totalItems}
-              </div>
-              <div style={{ fontWeight: 900, fontSize: 20 }}>
-                Итого: {formatPrice(totalPrice)}
-              </div>
-            </>
-          )}
-        </div>
-      </section>
+              <button
+                onClick={clearCart}
+                style={{
+                  width: "100%",
+                  padding: 14,
+                  background: "#e5e7eb",
+                  color: "#111827",
+                  border: "none",
+                  borderRadius: 14,
+                  fontSize: 15,
+                  fontWeight: 700,
+                  cursor: "pointer",
+                }}
+              >
+                Очистить корзину
+              </button>
+            </div>
+          </>
+        )}
+      </div>
+    </section>
+  );
 
+  const renderProfile = () => {
+    const tg = (window as any)?.Telegram?.WebApp;
+    const user = tg?.initDataUnsafe?.user;
+
+    return (
       <section style={{ marginBottom: 20 }}>
         <div style={cardStyle}>
           <h3 style={{ marginTop: 0, marginBottom: 14, fontSize: 22, fontWeight: 800 }}>
-            Данные клиента
+            Личный кабинет
           </h3>
 
           <input
@@ -607,31 +769,137 @@ export default function Home() {
               fontSize: 16,
               resize: "vertical",
               boxSizing: "border-box",
+              marginBottom: 14,
             }}
           />
+
+          <div
+            style={{
+              background: "#eef2f7",
+              borderRadius: 14,
+              padding: 14,
+              color: "#374151",
+            }}
+          >
+            <div style={{ fontWeight: 800, marginBottom: 8 }}>Данные Telegram</div>
+            <div>Имя: {user?.first_name || "-"}</div>
+            <div>Фамилия: {user?.last_name || "-"}</div>
+            <div>Username: {user?.username ? `@${user.username}` : "-"}</div>
+          </div>
         </div>
       </section>
+    );
+  };
 
-      <button
-        onClick={sendOrder}
-        disabled={loadingOrder}
+  return (
+    <main
+      style={{
+        minHeight: "100vh",
+        background:
+          "linear-gradient(180deg, #1f2937 0%, #111827 50%, #0b1220 100%)",
+        padding: 18,
+        paddingBottom: 90,
+        fontFamily:
+          "Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, sans-serif",
+        color: "white",
+      }}
+    >
+      <div
         style={{
-          width: "100%",
+          marginBottom: 20,
           padding: 18,
-          background: "#000000",
-          color: "#ffffff",
-          border: "none",
-          borderRadius: 16,
-          fontSize: 17,
-          fontWeight: 800,
-          cursor: "pointer",
-          opacity: loadingOrder ? 0.7 : 1,
-          boxShadow: "0 10px 24px rgba(0,0,0,0.25)",
-          marginBottom: 30,
+          borderRadius: 22,
+          background: "rgba(255,255,255,0.08)",
+          border: "1px solid rgba(255,255,255,0.08)",
+          backdropFilter: "blur(8px)",
         }}
       >
-        {loadingOrder ? "Отправка..." : `Оформить заказ (${totalItems})`}
-      </button>
+        <div
+          style={{
+            fontSize: 32,
+            fontWeight: 900,
+            letterSpacing: "-0.02em",
+            marginBottom: 6,
+          }}
+        >
+          TechPoint
+        </div>
+        <div
+          style={{
+            fontSize: 15,
+            color: "#d1d5db",
+            lineHeight: 1.5,
+          }}
+        >
+          Электроника и комплектующие под заказ
+        </div>
+      </div>
+
+      {successMessage && (
+        <div
+          style={{
+            background: "#d1fae5",
+            color: "#065f46",
+            padding: 14,
+            borderRadius: 16,
+            marginBottom: 18,
+            fontWeight: 700,
+          }}
+        >
+          {successMessage}
+        </div>
+      )}
+
+      {activeTab === "home" && renderHome()}
+      {activeTab === "catalog" && renderCatalog()}
+      {activeTab === "cart" && renderCart()}
+      {activeTab === "profile" && renderProfile()}
+
+      <nav
+        style={{
+          position: "fixed",
+          left: 12,
+          right: 12,
+          bottom: 12,
+          background: "rgba(17,24,39,0.95)",
+          border: "1px solid rgba(255,255,255,0.08)",
+          borderRadius: 20,
+          padding: 10,
+          display: "grid",
+          gridTemplateColumns: "repeat(4, 1fr)",
+          gap: 8,
+          backdropFilter: "blur(10px)",
+          boxShadow: "0 10px 30px rgba(0,0,0,0.3)",
+        }}
+      >
+        {[
+          { key: "home", label: "Главная", icon: "🏠" },
+          { key: "catalog", label: "Каталог", icon: "🛍" },
+          { key: "cart", label: "Корзина", icon: "🛒" },
+          { key: "profile", label: "Кабинет", icon: "👤" },
+        ].map((item) => {
+          const isActive = activeTab === item.key;
+          return (
+            <button
+              key={item.key}
+              onClick={() => setActiveTab(item.key as Tab)}
+              style={{
+                border: "none",
+                borderRadius: 14,
+                padding: "10px 6px",
+                background: isActive ? "#ffffff" : "transparent",
+                color: isActive ? "#111827" : "#ffffff",
+                fontWeight: 700,
+                cursor: "pointer",
+                fontSize: 12,
+              }}
+            >
+              <div style={{ fontSize: 18, marginBottom: 4 }}>{item.icon}</div>
+              <div>{item.label}</div>
+            </button>
+          );
+        })}
+      </nav>
     </main>
   );
 }
