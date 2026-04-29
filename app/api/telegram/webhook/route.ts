@@ -5,41 +5,42 @@ export async function GET() {
   return NextResponse.json({ ok: true });
 }
 
+function parseOrderFromText(text: string) {
+  const name = text.match(/Имя:\s*(.+)/)?.[1]?.trim() || "";
+  const phone = text.match(/Телефон:\s*(.+)/)?.[1]?.trim() || "";
+  const totalText = text.match(/Итого:\s*([\d\s]+)/)?.[1] || "0";
+  const total = Number(totalText.replace(/\s/g, ""));
+
+  const itemsBlock = text
+    .split("\n")
+    .filter((line) => /^\d+\.\s/.test(line))
+    .join(", ");
+
+  return {
+    form: { name, phone },
+    items: [{ title: itemsBlock, qty: 1 }],
+    totalPrice: total,
+  };
+}
+
 export async function POST(req: Request) {
   try {
     const body = await req.json();
-
     const botToken = process.env.BOT_TOKEN;
 
     const callback = body.callback_query;
+    if (!callback) return NextResponse.json({ ok: true });
 
-    if (!callback) {
-      return NextResponse.json({ ok: true });
-    }
-
-   let data;
-
-try {
-  data = JSON.parse(callback.data);
-} catch {
-  data = { action: callback.data };
-}
-
-const action = data.action;
+    const action = callback.data;
     const chatId = callback.message.chat.id;
     const messageId = callback.message.message_id;
+    const oldText = callback.message.text || "";
 
-    let newText = callback.message.text || "";
+    let newText = oldText;
 
     if (action === "accept_order") {
-      const trackCode = await addOrderToSheet({
-  form: {
-    name: data.order?.name,
-    phone: data.order?.phone
-  },
-  items: data.order?.items,
-  totalPrice: data.order?.total
-});
+      const order = parseOrderFromText(oldText);
+      const trackCode = await addOrderToSheet(order);
 
       newText += `\n\n✅ Заказ принят\n🔎 Трек-код: ${trackCode}`;
     }
