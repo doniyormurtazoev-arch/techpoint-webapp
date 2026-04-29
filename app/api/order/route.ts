@@ -62,10 +62,29 @@ export async function POST(req: Request) {
         headers: {
           "Content-Type": "application/json",
         },
-        body: JSON.stringify({
-          chat_id: adminChatId,
-          text: message,
-        }),
+       body: JSON.stringify({
+  chat_id: adminChatId,
+  text: message,
+  reply_markup: {
+    inline_keyboard: [
+      [
+        {
+          text: "✅ Принять",
+          callback_data: JSON.stringify({
+            action: "accept",
+            order: body
+          }),
+        },
+        {
+          text: "❌ Отклонить",
+          callback_data: JSON.stringify({
+            action: "reject",
+          }),
+        },
+      ],
+    ],
+  },
+}),
       }
     );
 
