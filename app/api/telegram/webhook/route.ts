@@ -1,4 +1,5 @@
 import { NextResponse } from "next/server";
+import { addOrderToSheet } from "@/lib/googleSheets";
 
 export async function GET() {
   return NextResponse.json({ ok: true });
@@ -9,10 +10,6 @@ export async function POST(req: Request) {
     const body = await req.json();
 
     const botToken = process.env.BOT_TOKEN;
-
-    if (!botToken) {
-      return NextResponse.json({ error: "Missing BOT_TOKEN" }, { status: 500 });
-    }
 
     const callback = body.callback_query;
 
@@ -27,7 +24,9 @@ export async function POST(req: Request) {
     let newText = callback.message.text || "";
 
     if (action === "accept_order") {
-      newText += "\n\n✅ Заказ принят";
+      const trackCode = await addOrderToSheet(body);
+
+      newText += `\n\n✅ Заказ принят\n🔎 Трек-код: ${trackCode}`;
     }
 
     if (action === "reject_order") {
@@ -36,9 +35,7 @@ export async function POST(req: Request) {
 
     await fetch(`https://api.telegram.org/bot${botToken}/editMessageText`, {
       method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-      },
+      headers: { "Content-Type": "application/json" },
       body: JSON.stringify({
         chat_id: chatId,
         message_id: messageId,
@@ -48,15 +45,9 @@ export async function POST(req: Request) {
 
     await fetch(`https://api.telegram.org/bot${botToken}/answerCallbackQuery`, {
       method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-      },
+      headers: { "Content-Type": "application/json" },
       body: JSON.stringify({
         callback_query_id: callback.id,
-        text:
-          action === "accept_order"
-            ? "Заказ принят"
-            : "Заказ отклонён",
       }),
     });
 
