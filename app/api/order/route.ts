@@ -21,20 +21,24 @@ export async function POST(req: Request) {
     const formatPrice = (price: number) =>
       new Intl.NumberFormat("ru-RU").format(price) + " сум";
 
-    const itemsText = body.items
-      .map(
-        (item: any, index: number) =>
-          `${index + 1}. ${item.title} x${item.qty} — ${formatPrice(
-            item.price * item.qty
-          )}`
-      )
-      .join("\n");
+    const itemsText = Array.isArray(body.items)
+      ? body.items
+          .map(
+            (item: any, index: number) =>
+              `${index + 1}. ${item.title} x${item.qty} — ${formatPrice(
+                Number(item.price || 0) * Number(item.qty || 1)
+              )}`
+          )
+          .join("\n")
+      : "Товары не указаны";
 
     const customerText = body.customer
       ? [
-          `Telegram: ${body.customer.first_name || ""} ${body.customer.last_name || ""}`.trim(),
+          `Telegram: ${body.customer.first_name || ""} ${
+            body.customer.last_name || ""
+          }`.trim(),
           body.customer.username ? `Username: @${body.customer.username}` : null,
-          `Telegram ID: ${body.customer.id}`,
+          body.customer.id ? `Telegram ID: ${body.customer.id}` : null,
         ]
           .filter(Boolean)
           .join("\n")
@@ -51,8 +55,8 @@ export async function POST(req: Request) {
       `${formText}\n\n` +
       `${customerText}\n\n` +
       `${itemsText}\n\n` +
-      `Всего товаров: ${body.totalItems}\n` +
-      `Итого: ${formatPrice(body.totalPrice)}\n\n` +
+      `Всего товаров: ${body.totalItems || 0}\n` +
+      `Итого: ${formatPrice(Number(body.totalPrice || 0))}\n\n` +
       `Оплата: 50% предоплата / 50% после получения`;
 
     const telegramRes = await fetch(
@@ -62,29 +66,24 @@ export async function POST(req: Request) {
         headers: {
           "Content-Type": "application/json",
         },
-       body: JSON.stringify({
-  chat_id: adminChatId,
-  text: message,
-  reply_markup: {
-    inline_keyboard: [
-      [
-        {
-          text: "✅ Принять",
-          callback_data: JSON.stringify({
-            action: "accept",
-            order: body
-          }),
-        },
-        {
-          text: "❌ Отклонить",
-          callback_data: JSON.stringify({
-            action: "reject",
-          }),
-        },
-      ],
-    ],
-  },
-}),
+        body: JSON.stringify({
+          chat_id: adminChatId,
+          text: message,
+          reply_markup: {
+            inline_keyboard: [
+              [
+                {
+                  text: "✅ Принять",
+                  callback_data: "accept_order",
+                },
+                {
+                  text: "❌ Отклонить",
+                  callback_data: "reject_order",
+                },
+              ],
+            ],
+          },
+        }),
       }
     );
 
