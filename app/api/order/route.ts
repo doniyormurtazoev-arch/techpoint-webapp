@@ -8,27 +8,39 @@ export async function POST(req: Request) {
     const adminChatId = process.env.ADMIN_CHAT_ID;
 
     if (!botToken || !adminChatId) {
-      return NextResponse.json({ error: "Missing env vars" }, { status: 500 });
+      return NextResponse.json(
+        {
+          error: "Missing env vars",
+          botTokenExists: Boolean(botToken),
+          adminChatIdExists: Boolean(adminChatId),
+        },
+        { status: 500 }
+      );
     }
 
     const formatPrice = (price: number) =>
       new Intl.NumberFormat("ru-RU").format(price) + " сум";
 
-    const itemsText = body.items
-      .map(
-        (item: any, index: number) =>
-          `${index + 1}. ${item.title} x${item.qty} — ${formatPrice(
-            item.price * item.qty
-          )}`
-      )
-      .join("\n");
+    const itemsText = Array.isArray(body.items)
+      ? body.items
+          .map(
+            (item: any, index: number) =>
+              `${index + 1}. ${item.title} x${item.qty} — ${formatPrice(
+                Number(item.price || 0) * Number(item.qty || 1)
+              )}`
+          )
+          .join("\n")
+      : "Товары не указаны";
 
     const message =
       `🛒 Новый заказ TechPoint\n\n` +
       `Имя: ${body.form?.name || "-"}\n` +
-      `Телефон: ${body.form?.phone || "-"}\n\n` +
+      `Телефон: ${body.form?.phone || "-"}\n` +
+      `Комментарий: ${body.form?.comment || "-"}\n\n` +
       `${itemsText}\n\n` +
-      `Итого: ${formatPrice(body.totalPrice)}\n`;
+      `Всего товаров: ${body.totalItems || 0}\n` +
+      `Итого: ${formatPrice(Number(body.totalPrice || 0))}\n\n` +
+      `Оплата: 50% предоплата / 50% после получения`;
 
     const telegramRes = await fetch(
       `https://api.telegram.org/bot${botToken}/sendMessage`,
@@ -45,15 +57,7 @@ export async function POST(req: Request) {
               [
                 {
                   text: "✅ Принять",
-                  callback_data: JSON.stringify({
-  action: "accept",
-  order: {
-    name: body.form?.name,
-    phone: body.form?.phone,
-    items: body.items,
-    total: body.totalPrice
-  }
-})
+                  callback_data: "accept_order",
                 },
                 {
                   text: "❌ Отклонить",
@@ -70,7 +74,10 @@ export async function POST(req: Request) {
 
     if (!telegramRes.ok || !telegramJson.ok) {
       return NextResponse.json(
-        { error: "Telegram error", telegramJson },
+        {
+          error: "Telegram error",
+          telegramJson,
+        },
         { status: 500 }
       );
     }
@@ -78,7 +85,10 @@ export async function POST(req: Request) {
     return NextResponse.json({ ok: true });
   } catch (error: any) {
     return NextResponse.json(
-      { error: error?.message || "Server error" },
+      {
+        error: "Server error",
+        message: error?.message || String(error),
+      },
       { status: 500 }
     );
   }
