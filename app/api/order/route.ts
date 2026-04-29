@@ -45,7 +45,15 @@ export async function POST(req: Request) {
               [
                 {
                   text: "✅ Принять",
-                  callback_data: "accept_order",
+                  callback_data: JSON.stringify({
+  action: "accept",
+  order: {
+    name: body.form?.name,
+    phone: body.form?.phone,
+    items: body.items,
+    total: body.totalPrice
+  }
+})
                 },
                 {
                   text: "❌ Отклонить",
