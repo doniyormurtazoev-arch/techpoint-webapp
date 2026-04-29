@@ -17,14 +17,29 @@ export async function POST(req: Request) {
       return NextResponse.json({ ok: true });
     }
 
-    const action = callback.data;
+   let data;
+
+try {
+  data = JSON.parse(callback.data);
+} catch {
+  data = { action: callback.data };
+}
+
+const action = data.action;
     const chatId = callback.message.chat.id;
     const messageId = callback.message.message_id;
 
     let newText = callback.message.text || "";
 
     if (action === "accept_order") {
-      const trackCode = await addOrderToSheet(body);
+      const trackCode = await addOrderToSheet({
+  form: {
+    name: data.order?.name,
+    phone: data.order?.phone
+  },
+  items: data.order?.items,
+  totalPrice: data.order?.total
+});
 
       newText += `\n\n✅ Заказ принят\n🔎 Трек-код: ${trackCode}`;
     }
