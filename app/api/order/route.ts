@@ -3,7 +3,7 @@ import { NextResponse } from "next/server";
 export async function POST(req: Request) {
   try {
     const body = await req.json();
-
+const telegramId = body.customer?.id;
     const botToken = process.env.BOT_TOKEN;
     const adminChatId = process.env.ADMIN_CHAT_ID;
 
