@@ -23,6 +23,14 @@ function parseOrderFromText(text: string) {
   };
 }
 
+function updateStatus(text: string, statusText: string) {
+  if (text.includes("Статус:")) {
+    return text.replace(/Статус:.*/g, `Статус: ${statusText}`);
+  }
+
+  return text + `\n\nСтатус: ${statusText}`;
+}
+
 export async function POST(req: Request) {
   try {
     const body = await req.json();
@@ -37,16 +45,35 @@ export async function POST(req: Request) {
     const oldText = callback.message.text || "";
 
     let newText = oldText;
+    let answerText = "Готово";
 
     if (action === "accept_order") {
       const order = parseOrderFromText(oldText);
       const trackCode = await addOrderToSheet(order);
 
-      newText += `\n\n✅ Заказ принят\n🔎 Трек-код: ${trackCode}`;
+      newText = updateStatus(oldText, "✅ Заказ принят");
+      newText += `\n\n🔎 Трек-код: ${trackCode}`;
+      answerText = "Заказ принят";
     }
 
     if (action === "reject_order") {
-      newText += "\n\n❌ Заказ отклонён";
+      newText = updateStatus(oldText, "❌ Заказ отклонён");
+      answerText = "Заказ отклонён";
+    }
+
+    if (action === "status_packing") {
+      newText = updateStatus(oldText, "📦 Собирается");
+      answerText = "Статус: собирается";
+    }
+
+    if (action === "status_delivery") {
+      newText = updateStatus(oldText, "🚚 В доставке");
+      answerText = "Статус: в доставке";
+    }
+
+    if (action === "status_done") {
+      newText = updateStatus(oldText, "✅ Завершён");
+      answerText = "Заказ завершён";
     }
 
     await fetch(`https://api.telegram.org/bot${botToken}/editMessageText`, {
@@ -56,6 +83,15 @@ export async function POST(req: Request) {
         chat_id: chatId,
         message_id: messageId,
         text: newText,
+        reply_markup: {
+          inline_keyboard: [
+            [
+              { text: "📦 Сборка", callback_data: "status_packing" },
+              { text: "🚚 Доставка", callback_data: "status_delivery" },
+              { text: "✅ Завершить", callback_data: "status_done" },
+            ],
+          ],
+        },
       }),
     });
 
@@ -64,6 +100,7 @@ export async function POST(req: Request) {
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({
         callback_query_id: callback.id,
+        text: answerText,
       }),
     });
 
