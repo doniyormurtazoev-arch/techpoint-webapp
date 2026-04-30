@@ -8,6 +8,7 @@ export async function GET() {
 function parseOrderFromText(text: string) {
   const name = text.match(/Имя:\s*(.+)/)?.[1]?.trim() || "";
   const phone = text.match(/Телефон:\s*(.+)/)?.[1]?.trim() || "";
+  const telegramId = text.match(/Telegram ID:\s*(.+)/)?.[1]?.trim() || "";
   const totalText = text.match(/Итого:\s*([\d\s]+)/)?.[1] || "0";
   const total = Number(totalText.replace(/\s/g, ""));
 
@@ -20,6 +21,7 @@ function parseOrderFromText(text: string) {
     form: { name, phone },
     items: [{ title: itemsBlock, qty: 1 }],
     totalPrice: total,
+    telegramId,
   };
 }
 
