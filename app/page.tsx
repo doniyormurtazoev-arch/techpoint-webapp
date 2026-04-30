@@ -1,5 +1,9 @@
 "use client";
-
+declare global {
+  interface Window {
+    Telegram?: any;
+  }
+}
 import { useEffect, useMemo, useState } from "react";
 
 type Category = {
@@ -204,31 +208,36 @@ export default function Home() {
 
       const tg = (window as any)?.Telegram?.WebApp;
       const user = tg?.initDataUnsafe?.user;
+const tgUser = window.Telegram?.WebApp?.initDataUnsafe?.user;
+const tgUser = window.Telegram?.WebApp?.initDataUnsafe?.user;
 
-      const payload = {
-        items: cart.map((item) => ({
-          id: item.id,
-          title: item.title,
-          price: item.price,
-          qty: item.qty,
-          status: item.status,
-        })),
-        totalItems,
-        totalPrice,
-        customer: user
-          ? {
-              id: user.id,
-              first_name: user.first_name,
-              last_name: user.last_name,
-              username: user.username,
-            }
-          : null,
-        form: {
-          name: name.trim(),
-          phone: phone.trim(),
-          comment: comment.trim(),
-        },
-      };
+const payload = {
+  items: cart.map((item) => ({
+    id: item.id,
+    title: item.title,
+    price: item.price,
+    qty: item.qty,
+    status: item.status,
+  })),
+
+  totalItems,
+  totalPrice,
+
+  customer: tgUser
+    ? {
+        id: tgUser.id,
+        first_name: tgUser.first_name,
+        last_name: tgUser.last_name,
+        username: tgUser.username,
+      }
+    : null,
+
+  form: {
+    name: name.trim(),
+    phone,
+    comment,
+  },
+};
 
       const res = await fetch("/api/order", {
         method: "POST",
