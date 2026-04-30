@@ -36,6 +36,7 @@ const telegramId = body.customer?.id;
       `🛒 Новый заказ TechPoint\n\n` +
       `Имя: ${body.form?.name || "-"}\n` +
       `Телефон: ${body.form?.phone || "-"}\n` +
+        `Telegram ID: ${body.customer?.id || "-"}\n` +
       `Комментарий: ${body.form?.comment || "-"}\n\n` +
       `${itemsText}\n\n` +
       `Всего товаров: ${body.totalItems || 0}\n` +
