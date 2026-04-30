@@ -38,77 +38,103 @@ export default function OrderStatusPage() {
     }
   };
 
+  const totalText =
+    data?.total ? `${String(data.total)} сум` : "-";
+
   return (
-    <main className="min-h-screen bg-neutral-950 text-white px-4 py-10">
-      <div className="mx-auto max-w-xl rounded-3xl bg-neutral-900 p-6 shadow-2xl border border-neutral-800">
-        <div className="text-center mb-8">
-          <div className="text-5xl mb-3">🛒</div>
-          <h1 className="text-3xl font-bold">Проверка заказа</h1>
-          <p className="text-neutral-400 mt-2">
+    <main
+      style={{
+        minHeight: "100vh",
+        background: "#0f172a",
+        color: "white",
+        padding: "30px 16px",
+        fontFamily: "Arial, sans-serif",
+      }}
+    >
+      <div
+        style={{
+          maxWidth: 520,
+          margin: "0 auto",
+          background: "#111827",
+          borderRadius: 24,
+          padding: 24,
+          boxShadow: "0 20px 60px rgba(0,0,0,0.35)",
+        }}
+      >
+        <div style={{ textAlign: "center", marginBottom: 24 }}>
+          <div style={{ fontSize: 48 }}>🛒</div>
+          <h1 style={{ fontSize: 30, margin: "10px 0" }}>
+            Проверка заказа
+          </h1>
+          <p style={{ color: "#9ca3af" }}>
             Введите трек-код, который вы получили после оформления заказа
           </p>
         </div>
 
-        <div className="flex gap-2">
+        <div style={{ display: "flex", gap: 8 }}>
           <input
             value={code}
             onChange={(e) => setCode(e.target.value)}
-            placeholder="Например: TP-1777463472496"
-            className="flex-1 rounded-xl bg-neutral-800 border border-neutral-700 px-4 py-3 outline-none focus:border-blue-500"
+            placeholder="TP-1777463472496"
+            style={{
+              flex: 1,
+              padding: 14,
+              borderRadius: 12,
+              border: "1px solid #374151",
+              background: "#1f2937",
+              color: "white",
+              outline: "none",
+            }}
           />
 
           <button
             onClick={checkOrder}
             disabled={loading || !code.trim()}
-            className="rounded-xl bg-blue-600 px-5 py-3 font-semibold disabled:opacity-50"
+            style={{
+              padding: "14px 18px",
+              borderRadius: 12,
+              border: "none",
+              background: "#2563eb",
+              color: "white",
+              fontWeight: 700,
+              cursor: "pointer",
+            }}
           >
             {loading ? "..." : "Проверить"}
           </button>
         </div>
 
         {error && (
-          <div className="mt-5 rounded-xl bg-red-950 border border-red-800 p-4 text-red-200">
+          <div
+            style={{
+              marginTop: 18,
+              padding: 14,
+              borderRadius: 12,
+              background: "#7f1d1d",
+              color: "#fecaca",
+            }}
+          >
             {error}
           </div>
         )}
 
         {data && (
-          <div className="mt-6 rounded-2xl bg-neutral-800 border border-neutral-700 p-5 space-y-4">
-            <div>
-              <p className="text-neutral-400 text-sm">Трек-код</p>
-              <p className="font-bold text-lg">{data.trackCode}</p>
-            </div>
-
-            <div>
-              <p className="text-neutral-400 text-sm">Статус</p>
-              <p className="text-xl font-bold">
-                {statusMap[data.status] || data.status}
-              </p>
-            </div>
-
-            <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
-              <div>
-                <p className="text-neutral-400 text-sm">Имя</p>
-                <p>{data.name || "-"}</p>
-              </div>
-
-              <div>
-                <p className="text-neutral-400 text-sm">Телефон</p>
-                <p>{data.phone || "-"}</p>
-              </div>
-            </div>
-
-            <div>
-              <p className="text-neutral-400 text-sm">Товары</p>
-              <p>{data.items}</p>
-            </div>
-
-            <div>
-              <p className="text-neutral-400 text-sm">Сумма</p>
-              <p className="text-2xl font-bold">
-                {Number(data.total).toLocaleString("ru-RU")} сум
-              </p>
-            </div>
+          <div
+            style={{
+              marginTop: 24,
+              background: "#1f2937",
+              borderRadius: 18,
+              padding: 20,
+            }}
+          >
+            <p><b>Трек-код:</b> {data.trackCode}</p>
+            <p><b>Статус:</b> {statusMap[data.status] || data.status}</p>
+            <p><b>Имя:</b> {data.name || "-"}</p>
+            <p><b>Телефон:</b> {data.phone || "-"}</p>
+            <p><b>Товары:</b> {data.items || "-"}</p>
+            <p style={{ fontSize: 22 }}>
+              <b>Сумма:</b> {totalText}
+            </p>
           </div>
         )}
       </div>
