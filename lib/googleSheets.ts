@@ -14,20 +14,21 @@ export async function addOrderToSheet(order: any) {
 
   await sheets.spreadsheets.values.append({
     spreadsheetId: process.env.GOOGLE_SHEET_ID,
-    range: "orders!A:G",
+    range: "orders!A:H",
     valueInputOption: "USER_ENTERED",
     requestBody: {
-      values: [
-        [
-          trackCode,
-          new Date().toISOString(),
-          order.form?.name || "",
-          order.form?.phone || "",
-          order.items?.map((i: any) => `${i.title} x${i.qty}`).join(", "),
-          order.totalPrice || 0,
-          "accepted",
-        ],
-      ],
+    values: [
+  [
+    trackCode,
+    new Date().toISOString(),
+    order.form?.name || "",
+    order.form?.phone || "",
+    order.items?.map((i: any) => `${i.title} x${i.qty}`).join(", "),
+    order.totalPrice || 0,
+    "accepted",
+    order.telegramId || "", // 👈 добавили
+  ],
+],
     },
   });
 
