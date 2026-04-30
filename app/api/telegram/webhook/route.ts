@@ -66,10 +66,7 @@ if (body.message) {
     let answerText = "Готово";
 
     if (action === "accept_order") {
-      const order = {
-  ...parseOrderFromText(oldText),
-  telegramId: callback.from.id,
-};
+     const order = parseOrderFromText(oldText);
       const trackCode = await addOrderToSheet(order);
 
       newText = updateStatus(oldText, "✅ Заказ принят");
