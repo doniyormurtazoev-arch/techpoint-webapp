@@ -35,7 +35,23 @@ export async function POST(req: Request) {
   try {
     const body = await req.json();
     const botToken = process.env.BOT_TOKEN;
+if (body.message) {
+  const text = body.message.text;
+  const chatId = body.message.chat.id;
+  const botToken = process.env.BOT_TOKEN;
 
+  if (text === "📦 Мои заказы") {
+    await fetch(`${process.env.BASE_URL}/api/telegram/my-orders`, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify(body),
+    });
+
+    return NextResponse.json({ ok: true });
+  }
+}
     const callback = body.callback_query;
     if (!callback) return NextResponse.json({ ok: true });
 
