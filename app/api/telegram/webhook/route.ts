@@ -48,7 +48,10 @@ export async function POST(req: Request) {
     let answerText = "Готово";
 
     if (action === "accept_order") {
-      const order = parseOrderFromText(oldText);
+      const order = {
+  ...parseOrderFromText(oldText),
+  telegramId: callback.from.id,
+};
       const trackCode = await addOrderToSheet(order);
 
       newText = updateStatus(oldText, "✅ Заказ принят");
