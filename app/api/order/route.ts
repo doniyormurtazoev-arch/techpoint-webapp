@@ -40,6 +40,7 @@ export async function POST(req: Request) {
       `${itemsText}\n\n` +
       `Всего товаров: ${body.totalItems || 0}\n` +
       `Итого: ${formatPrice(Number(body.totalPrice || 0))}\n\n` +
+      `Статус: 🆕 Новый\n\n` +
       `Оплата: 50% предоплата / 50% после получения`;
 
     const telegramRes = await fetch(
@@ -62,6 +63,20 @@ export async function POST(req: Request) {
                 {
                   text: "❌ Отклонить",
                   callback_data: "reject_order",
+                },
+              ],
+              [
+                {
+                  text: "📦 Сборка",
+                  callback_data: "status_packing",
+                },
+                {
+                  text: "🚚 Доставка",
+                  callback_data: "status_delivery",
+                },
+                {
+                  text: "✅ Завершить",
+                  callback_data: "status_done",
                 },
               ],
             ],
