@@ -206,9 +206,6 @@ export default function Home() {
     try {
       setLoadingOrder(true);
 
-      const tg = (window as any)?.Telegram?.WebApp;
-      const user = tg?.initDataUnsafe?.user;
-const tgUser = window.Telegram?.WebApp?.initDataUnsafe?.user;
 const tgUser = window.Telegram?.WebApp?.initDataUnsafe?.user;
 
 const payload = {
