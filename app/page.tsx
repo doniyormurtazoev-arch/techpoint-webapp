@@ -206,7 +206,8 @@ export default function Home() {
     try {
       setLoadingOrder(true);
 
-const tgUser = window.Telegram?.WebApp?.initDataUnsafe?.user;
+const tgUser = (window as any)?.Telegram?.WebApp?.initDataUnsafe?.user;
+const urlTelegramId = new URLSearchParams(window.location.search).get("tgid");
 
 const payload = {
   items: cart.map((item) => ({
@@ -220,14 +221,12 @@ const payload = {
   totalItems,
   totalPrice,
 
-  customer: tgUser
-    ? {
-        id: tgUser.id,
-        first_name: tgUser.first_name,
-        last_name: tgUser.last_name,
-        username: tgUser.username,
-      }
-    : null,
+  customer: {
+    id: tgUser?.id || urlTelegramId,
+    first_name: tgUser?.first_name || "",
+    last_name: tgUser?.last_name || "",
+    username: tgUser?.username || "",
+  },
 
   form: {
     name: name.trim(),
