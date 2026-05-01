@@ -1,5 +1,5 @@
-import "./globals.css";
 import Script from "next/script";
+import "./globals.css";
 
 export const metadata = {
   title: "TechPoint",
@@ -13,13 +13,13 @@ export default function RootLayout({
 }) {
   return (
     <html lang="ru">
-      <body>
-        {children}
+      <head>
         <Script
           src="https://telegram.org/js/telegram-web-app.js"
           strategy="beforeInteractive"
         />
-      </body>
+      </head>
+      <body>{children}</body>
     </html>
   );
 }
