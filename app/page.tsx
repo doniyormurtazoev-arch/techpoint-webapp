@@ -209,7 +209,7 @@ export default function Home() {
 const tgUser = (window as any)?.Telegram?.WebApp?.initDataUnsafe?.user;
 
 const urlTelegramIdRaw = new URLSearchParams(window.location.search).get("tgid");
-const urlTelegramId = urlTelegramIdRaw ? Number(urlTelegramIdRaw) : null;
+const urlTelegramId = urlTelegramIdRaw ? String(urlTelegramIdRaw) : "";
 
 const payload = {
   items: cart.map((item) => ({
@@ -224,10 +224,17 @@ const payload = {
   totalPrice,
 
   customer: {
-    id: tgUser?.id || urlTelegramId || null,
+    id: tgUser?.id ? String(tgUser.id) : urlTelegramId,
     first_name: tgUser?.first_name || "",
     last_name: tgUser?.last_name || "",
     username: tgUser?.username || "",
+  },
+
+  debug: {
+    currentUrl: window.location.href,
+    search: window.location.search,
+    tgUserId: tgUser?.id ? String(tgUser.id) : "",
+    urlTelegramId,
   },
 
   form: {
