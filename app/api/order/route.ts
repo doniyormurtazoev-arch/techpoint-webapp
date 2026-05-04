@@ -38,7 +38,7 @@ export async function POST(req: Request) {
   `Телефон: ${body.form?.phone || "-"}\n` +
   `Telegram ID: ${body.customer?.id || "-"}\n` +
   `DEBUG URL: ${body.debug?.currentUrl || "-"}\n` +
-  `DEBUG SEARCH: ${body.debug?.search || "-"}\n` +
+  `DEBUG HASH: ${body.debug?.hash || "-"}\n` +
   `DEBUG TG USER ID: ${body.debug?.tgUserId || "-"}\n` +
   `DEBUG URL TGID: ${body.debug?.urlTelegramId || "-"}\n` +
   `Комментарий: ${body.form?.comment || "-"}\n\n` +
