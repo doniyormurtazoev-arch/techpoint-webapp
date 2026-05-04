@@ -33,17 +33,20 @@ export async function POST(req: Request) {
       : "Товары не указаны";
 
     const message =
-      `🛒 Новый заказ TechPoint\n\n` +
-      `Имя: ${body.form?.name || "-"}\n` +
-      `Телефон: ${body.form?.phone || "-"}\n` +
-      `Telegram ID: ${body.customer?.id || "-"}\n` +
-      `Комментарий: ${body.form?.comment || "-"}\n\n` +
-      `${itemsText}\n\n` +
-      `Всего товаров: ${body.totalItems || 0}\n` +
-      `Итого: ${formatPrice(Number(body.totalPrice || 0))}\n\n` +
-      `Статус: 🆕 Новый\n\n` +
-      `Оплата: 50% предоплата / 50% после получения`;
-
+  `🛒 Новый заказ TechPoint\n\n` +
+  `Имя: ${body.form?.name || "-"}\n` +
+  `Телефон: ${body.form?.phone || "-"}\n` +
+  `Telegram ID: ${body.customer?.id || "-"}\n` +
+  `DEBUG URL: ${body.debug?.currentUrl || "-"}\n` +
+  `DEBUG SEARCH: ${body.debug?.search || "-"}\n` +
+  `DEBUG TG USER ID: ${body.debug?.tgUserId || "-"}\n` +
+  `DEBUG URL TGID: ${body.debug?.urlTelegramId || "-"}\n` +
+  `Комментарий: ${body.form?.comment || "-"}\n\n` +
+  `${itemsText}\n\n` +
+  `Всего товаров: ${body.totalItems || 0}\n` +
+  `Итого: ${formatPrice(Number(body.totalPrice || 0))}\n\n` +
+  `Статус: 🆕 Новый\n\n` +
+  `Оплата: 50% предоплата / 50% после получения`;
     const telegramRes = await fetch(
       `https://api.telegram.org/bot${botToken}/sendMessage`,
       {
